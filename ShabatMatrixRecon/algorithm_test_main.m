@@ -10,7 +10,7 @@ true_zeros = rand(size(ground_truth)) < true_zero_prob; % 0 percent true zeros
 ground_truth(true_zeros) = 0;
 
 %% Make zero-inflated "Observation" matrix.
-zero_inflate_prob = 0.4;
+zero_inflate_prob = 0.1;
 zero_inflation_mask = rand(size(ground_truth)) < zero_inflate_prob; % 0%  of entries are 0
 observed = ground_truth;
 observed(zero_inflation_mask) = 0;
@@ -30,7 +30,7 @@ masks = cell(num_masks,1);
 
 % Tried using all the zeros as the "unobserved population"
 for i = 1:num_masks
-    masks{i} = zero_inds(randi(num_zeros,num_non_observed,1));
+    masks{i} = zero_inds(randperm(num_zeros,num_non_observed));
 %     masks{i} = find(zero_inflation_mask); 
 end
 
