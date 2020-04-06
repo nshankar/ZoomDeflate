@@ -3,13 +3,15 @@ rng(41);
 %% Make ground truth
 num_cells = 400;
 num_genes = 800;
+true_zero_prob = 0; 
 
 ground_truth = randi([0,10],num_genes,10)*randi([0,10],10,num_cells); % 400x400 of rank 10
-true_zeros = rand(size(ground_truth)) < 0; % 0 percent true zeros
+true_zeros = rand(size(ground_truth)) < true_zero_prob; % 0 percent true zeros
 ground_truth(true_zeros) = 0;
 
 %% Make zero-inflated "Observation" matrix.
-zero_inflation_mask = rand(size(ground_truth)) < 0.40; % 0%  of entries are 0
+zero_inflate_prob = 0.4;
+zero_inflation_mask = rand(size(ground_truth)) < zero_inflate_prob; % 0%  of entries are 0
 observed = ground_truth;
 observed(zero_inflation_mask) = 0;
 
@@ -19,7 +21,7 @@ zero_inds = find(zero_entries);
 num_zeros = length(zero_inds);
 
 %% Make masks
-num_masks = 10;
+num_masks = 2;
 
 theoretical_limit = 0.75; % Fix this to be something from CBT paper
 num_non_observed = min(floor(num_zeros * 0.9),floor(theoretical_limit*numel(ground_truth)));
