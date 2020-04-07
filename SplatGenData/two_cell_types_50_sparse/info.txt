@@ -1,0 +1,9 @@
+Sim produce by generate_data_script.R with the following params
+
+random_seed <- 43
+num_cells <- 1000
+num_genes <- 50
+num_groups <- 2
+dropout <- 1 #boolean valued for now
+dropout.mid.value <- 5
+dropout.shape.value <- -0.5
