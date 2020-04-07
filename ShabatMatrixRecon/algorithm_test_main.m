@@ -15,6 +15,15 @@ zero_inflation_mask = rand(size(ground_truth)) < zero_inflate_prob; % 0%  of ent
 observed = ground_truth;
 observed(zero_inflation_mask) = 0;
 
+fprintf('truth: %g \n ', clustering_perf(ground_truth, 10))
+fprintf('truth: %g \n ', clustering_perf(ground_truth, 10))
+fprintf('truth: %g \n ', clustering_perf(ground_truth, 10))
+
+fprintf('observed: %g \n ', clustering_perf(observed, 10))
+fprintf('observed: %g \n ', clustering_perf(observed, 10))
+fprintf('observed: %g \n ', clustering_perf(observed, 10))
+
+
 %% Collect the set of zero entries
 zero_entries = (observed == 0);
 zero_inds = find(zero_entries);
@@ -72,6 +81,11 @@ Diff_sq = abs(putative_array_matrix - ground_truth).^2;
 
 fprintf('MSE on known entries: %g \n',sqrt(sum2(Diff_sq .*known_mask) / sum(known_mask(:)) ));
 fprintf('MSE on unknown entries: %g \n',sqrt(sum2(Diff_sq.*recon_mask)/sum(recon_mask(:)) ));
+
+num_clusters = 10;
+fprintf('clustering perf of ground truth: %g \n ', clustering_perf(ground_truth, num_clusters))
+fprintf('clustering perf of observed: %g \n ', clustering_perf(observed, num_clusters))
+fprintf('clustering perf of reconstructed: %g \n ', clustering_perf(putative_array_matrix, num_clusters))
 %% 
 figure(1)
 hold on
@@ -86,3 +100,24 @@ histogram(putative_array_matrix .* known_mask,100);
 figure(3)
 hold on
 histogram(Diff_sq .* known_mask,100);
+
+%% Helper Functions
+% Computes the average Silhoutte coeficient on k clustering (clustering
+% found by k means)
+% X (n x p matrix) each column represents a single point
+% k number of clusters
+% Closer to 1 the better.
+% Output seems to be randomized based on how kmeans operates
+% The variance in the output should decrease for clustered data
+function perf = clustering_perf(X, k)
+    num_tries = 3; % Takes best out of 5 tries
+    perf = 0;
+    for i = 1:num_tries
+        [idx, C, sumd] = kmeans(X',k);
+        S = silhouette(X',idx,'Euclidean');
+        trial_perf = mean(S);
+        if trial_perf > perf;
+            perf = trial_perf;
+        end
+    end
+end
