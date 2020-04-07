@@ -15,15 +15,6 @@ zero_inflation_mask = rand(size(ground_truth)) < zero_inflate_prob; % 0%  of ent
 observed = ground_truth;
 observed(zero_inflation_mask) = 0;
 
-fprintf('truth: %g \n ', clustering_perf(ground_truth, 10))
-fprintf('truth: %g \n ', clustering_perf(ground_truth, 10))
-fprintf('truth: %g \n ', clustering_perf(ground_truth, 10))
-
-fprintf('observed: %g \n ', clustering_perf(observed, 10))
-fprintf('observed: %g \n ', clustering_perf(observed, 10))
-fprintf('observed: %g \n ', clustering_perf(observed, 10))
-
-
 %% Collect the set of zero entries
 zero_entries = (observed == 0);
 zero_inds = find(zero_entries);
