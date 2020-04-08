@@ -4,12 +4,12 @@ library(splatter)
 random_seed <- 43
 num_cells <- 1000
 num_genes <- 50
-num_groups <- 1
+num_groups <- 2
 dropout <- 1 #boolean valued for now
-dropout.mid.value <- 6
+dropout.mid.value <- 5
 dropout.shape.value <- -0.5
 
-PATHNAME <- "/Users/nikhil/Documents/College/Math 651/ZoomDeflate/SplatGenData/one_cell_types_50_sparse/"
+PATHNAME <- "/Users/nikhil/Documents/College/Math 651/ZoomDeflate/SplatGenData/two_cell_types_50_sparse/"
 
 ### Run simulation ###
 params <- newSplatParams()
@@ -44,6 +44,6 @@ dir.create(PATHNAME)
 write.csv(counts(sim), paste(PATHNAME, "counts.csv"))
 if(dropout) {
   write.csv(assays(sim)[["TrueCounts"]], paste(PATHNAME, "true_counts.csv"))
-  write.csv(assays(sim)[["Dropout"]], paste(PATHNAME, "dropouts.csv"))
+  write.csv(assays(sim)[["Dropout"]]*1, paste(PATHNAME, "dropouts.csv"))
 }
 

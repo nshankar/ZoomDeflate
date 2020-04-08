@@ -26,12 +26,12 @@ formats = {'png','epsc','fig'};
 
 %% messing around with filepaths 
 % put the path of your github repo here. End it with a slash
-filepath = '/Users/jpdsilva/Documents/Projects/ZoomDeflate/'; 
+filepath = '../'; 
 
 filepath_in = [filepath,'SplatGenData/one_cell_types_50_sparse/'];
 filepath_in = PathSlashCorrector(filepath_in);
 
-filepath_out = SubfolderMaker(filepath,'Figures/one_cell_types_50_sparse/'); 
+filepath_out = SubfolderMaker(filepath,'Figures/two_cell_types_50_sparse/'); 
 filepath_out = PathSlashCorrector(filepath_out); 
 
 %% 
@@ -42,7 +42,7 @@ observed = csvread([filepath_in,' counts.csv'],1,1);
 
 
 %% Reconstruct from "Observation" matrix
-num_mask = 4;
+num_mask = 10;
 
 lambda_tol = 10;
 tol = 1e-8;
@@ -53,6 +53,7 @@ N = 100;
 % reconstructed = all_zero_reconstruction(observed, lambda_tol, tol, N);
 
 reconstructed = masked_reconstruction(observed, num_mask, lambda_tol, tol, N);
+%reconstructed = all_zero_reconstruction(observed, lambda_tol, tol, N);
 
 %% Print performance results
 zero_entries = (observed == 0);
@@ -63,10 +64,10 @@ fprintf('\n Corrupted matrix nuclear norm (initial): %g \n',sum(svd(observed)));
 fprintf('Restored matrix nuclear norm (final): %g \n',sum(svd(reconstructed)));
 Diff_sq = abs(reconstructed - ground_truth).^2;
 
-fprintf('MSE on known entries: %g \n',sqrt(sum2(Diff_sq .*known_mask) / sum(known_mask(:)) ));
-fprintf('MSE on unknown entries: %g \n',sqrt(sum2(Diff_sq.*recon_mask)/sum(recon_mask(:)) ));
+fprintf('RMSE on known entries: %g \n',sqrt(sum2(Diff_sq .*known_mask) / sum(known_mask(:)) ));
+fprintf('RMSE on unknown entries: %g \n',sqrt(sum2(Diff_sq.*recon_mask)/sum(recon_mask(:)) ));
 
-num_clusters = 10;
+num_clusters = 2;
 fprintf('clustering perf of ground truth: %g \n ', clustering_perf(ground_truth, num_clusters))
 fprintf('clustering perf of observed: %g \n ', clustering_perf(observed, num_clusters))
 fprintf('clustering perf of reconstructed: %g \n ', clustering_perf(reconstructed, num_clusters))
