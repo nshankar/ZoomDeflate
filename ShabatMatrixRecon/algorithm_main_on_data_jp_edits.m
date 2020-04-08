@@ -50,8 +50,8 @@ observed = csvread([filepath_in,' counts.csv'],1,1);
 % end 
 %% Preprocessing step 
 scaling_flag = 'std';   % allowable values are 'none','std','noise'
-observed = preprocess(observed,scaling_flag);
-ground_truth = preprocess(ground_truth,scaling_flag); 
+[observed,scalar_multiples] = preprocess(observed,scaling_flag);
+ground_truth = scalar_multiples * ground_truth; 
 
 %% look at some gene distributions
 % figure(4)
@@ -174,7 +174,7 @@ end
 %% Helper Functions
 
 % computes RMSE of entries included in the mask. mask should be logical.
-function RMSE_value = RMSE(X,truth,mask)
+function [RMSE_value,scalar_multiples] = RMSE(X,truth,mask)
     squared_diff = (X - truth).^2;
     RMSE_value = sqrt(sum2(squared_diff(mask)) / sum(mask(:)));
 end
@@ -182,6 +182,7 @@ end
 function X_proc = preprocess(X,scaling_flag)
 %Want to take stds only over the nonzero entries (NOT  row_stds =
 %std(X,0,2);)  
+scalar_multiples = eye(num_genes);
 if strcmp(scaling_flag,'std') || strcmp(scaling_flag,'noise')
     num_genes = size(X,1); 
     row_stds = zeros(num_genes,1);
@@ -194,7 +195,8 @@ if strcmp(scaling_flag,'none')
     X_proc = X; 
     return
 elseif strcmp(scaling_flag,'std')
-    X_proc = diag(1 ./ row_stds) * X; 
+    scalar_multiples = diag( 1 ./ row_stds); 
+    X_proc = scalar_multiples * X; 
     return
 elseif strcmp(scaling_flag,'noise')
     row_means = zeros(num_genes,1);
@@ -202,7 +204,8 @@ elseif strcmp(scaling_flag,'noise')
         row_means(i) = mean(X(i,(X(i,:)~=0)));
     end 
     row_noise = (row_stds ./ row_means).^2; 
-    X_proc = diag(1 ./ row_noise) * X; 
+    scalar_multiples = diag(1 ./ row_noise);
+    X_proc =  scalar_multiples * X; 
     return
 else
     fprintf('ERROR: INCORRECT FLAG IN PREPROCESSING. NO PROCESSING FOR YOU.')
