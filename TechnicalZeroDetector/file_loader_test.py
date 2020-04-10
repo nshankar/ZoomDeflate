@@ -8,7 +8,6 @@ Created on Thu Apr  9 14:44:17 2020
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-import os
 
 """
 [Input]
@@ -39,11 +38,6 @@ such that each cell fits in very "tight" to some spanning vector V_i
 
 
 """
-''' 
-WARNING: As of now, your working directory should be the TechnicalZeroDetector/ 
-folder in order for the load function to work correctly.
-    
-'''
 def cluster_span(X, rank, threshold_ratio):
     [r,c] = np.shape(X)
     # Run kmeans to get a general idea of clustering
@@ -126,24 +120,6 @@ def random_mat(r,c,rank,sparcity):
             
     return X
 
-def load_dropouts(subfolder):
-    data_path = os.path.dirname(os.getcwd())
-    data_path = data_path + '/SplatGenData/'
-    data_folder = data_path + subfolder
-    try:
-        file_to_load = data_folder + 'dropouts.csv'
-        with open(file_to_load) as data_file:
-            ncols = len(data_file.readline().split(','))
-            X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
-        Y = np.matrix(X)
-    except FileNotFoundError:
-        file_to_load = data_folder + ' dropouts.csv'
-        with open(file_to_load) as data_file:
-            ncols = len(data_file.readline().split(','))
-            X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
-        Y = np.matrix(X)
-    return Y
-
 def test():
     row = 50
     col = 450
@@ -176,14 +152,12 @@ def test():
     plt.savefig("0-1_reconstruction", dpi=600)
 
 def main():
-    X = load_dropouts('5_groups_10000_cells_1000_genes/')
-    [row,col] = np.shape(X)
-
-#    threshold_ratio = # TODO take as argument see description in documentation
-#    rank = # TODO take as an argument (should be an upper bound on clustering)
-#    
-#    TightMask, LooseMask, classification = cluster_span(X, rank, threshold_ratio)
-
+    X = # TODO import 0-1 matrix
+    threshold_ratio = # TODO take as argument see description in documentation
+    rank = # TODO take as an argument (should be an upper bound on clustering)
+    
+    TightMask, LooseMask, classification = cluster_span(X, rank, threshold_ratio)
+    
     # TODO save TightMask LooseMask
     # TODO print some performance stuff? Number of technical zeros detected (hopefully)
     # Also, it might be nice to see what happens when we reorder X and masks
