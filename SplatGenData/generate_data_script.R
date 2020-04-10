@@ -2,14 +2,14 @@ library(splatter)
 
 ### Parameters (choose wisely) ###
 random_seed <- 43
-num_cells <- 1000
-num_genes <- 50
-num_groups <- 2
+num_cells <- 10000
+num_genes <- 1000
+num_groups <- 10
 dropout <- 1 #boolean valued for now
-dropout.mid.value <- 5
-dropout.shape.value <- -0.5
+dropout.mid.value <- 2
+dropout.shape.value <- -1
 
-PATHNAME <- "/Users/nikhil/Documents/College/Math 651/ZoomDeflate/SplatGenData/two_cell_types_50_sparse/"
+PATHNAME <- "/Users/nikhil/Documents/College/Math 651/ZoomDeflate/SplatGenData/10_groups_10000_cells_1000_genes/"
 
 ### Run simulation ###
 params <- newSplatParams()

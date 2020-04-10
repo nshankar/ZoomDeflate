@@ -50,8 +50,8 @@ observed = csvread([filepath_in,' counts.csv'],1,1);
 % end 
 %% Preprocessing step 
 scaling_flag = 'std';   % allowable values are 'none','std','noise'
-observed = preprocess(observed,scaling_flag);
-ground_truth = preprocess(ground_truth,scaling_flag); 
+[observed,scalar_multiples] = preprocess(observed,scaling_flag);
+ground_truth = scalar_multiples * ground_truth; 
 
 %% look at some gene distributions
 % figure(4)
@@ -179,35 +179,38 @@ function RMSE_value = RMSE(X,truth,mask)
     RMSE_value = sqrt(sum2(squared_diff(mask)) / sum(mask(:)));
 end
 
-function X_proc = preprocess(X,scaling_flag)
+function [X_proc,scalar_multiples] = preprocess(X,scaling_flag)
 %Want to take stds only over the nonzero entries (NOT  row_stds =
-%std(X,0,2);)  
-if strcmp(scaling_flag,'std') || strcmp(scaling_flag,'noise')
-    num_genes = size(X,1); 
-    row_stds = zeros(num_genes,1);
-    for i = 1:num_genes
-        nonzero_entries = double(~(X(i,:)==0));
-        row_stds(i) = std(X(i,:),nonzero_entries,2); 
-    end 
-end
-if strcmp(scaling_flag,'none')
-    X_proc = X; 
-    return
-elseif strcmp(scaling_flag,'std')
-    X_proc = diag(1 ./ row_stds) * X; 
-    return
-elseif strcmp(scaling_flag,'noise')
-    row_means = zeros(num_genes,1);
-    for i = 1:num_genes
-        row_means(i) = mean(X(i,(X(i,:)~=0)));
-    end 
-    row_noise = (row_stds ./ row_means).^2; 
-    X_proc = diag(1 ./ row_noise) * X; 
-    return
-else
-    fprintf('ERROR: INCORRECT FLAG IN PREPROCESSING. NO PROCESSING FOR YOU.')
-    X_proc = X; 
-end
+    %std(X,0,2);)
+    num_genes = size(X,1);
+    scalar_multiples = eye(num_genes);
+    if strcmp(scaling_flag,'std') || strcmp(scaling_flag,'noise')
+        row_stds = zeros(num_genes,1);
+        for i = 1:num_genes
+            nonzero_entries = double(~(X(i,:)==0));
+            row_stds(i) = std(X(i,:),nonzero_entries,2);
+        end
+    end
+    if strcmp(scaling_flag,'none')
+        X_proc = X;
+        return
+    elseif strcmp(scaling_flag,'std')
+        scalar_multiples = diag( 1 ./ row_stds);
+        X_proc = scalar_multiples * X;
+        return
+    elseif strcmp(scaling_flag,'noise')
+        row_means = zeros(num_genes,1);
+        for i = 1:num_genes
+            row_means(i) = mean(X(i,(X(i,:)~=0)));
+        end
+        row_noise = (row_stds ./ row_means).^2;
+        scalar_multiples = diag(1 ./ row_noise);
+        X_proc =  scalar_multiples * X;
+        return
+    else
+        fprintf('ERROR: INCORRECT FLAG IN PREPROCESSING. NO PROCESSING FOR YOU.')
+        X_proc = X;
+    end
 end
 
 
