@@ -39,11 +39,12 @@ such that each cell fits in very "tight" to some spanning vector V_i
 
 
 """
+
 ''' 
 WARNING: As of now, your working directory should be the TechnicalZeroDetector/ 
 folder in order for the load function to work correctly.
-    
 '''
+
 def cluster_span(X, rank, threshold_ratio):
     [r,c] = np.shape(X)
     # Run kmeans to get a general idea of clustering
@@ -126,23 +127,55 @@ def random_mat(r,c,rank,sparcity):
             
     return X
 
-def load_dropouts(subfolder):
+def load_counts(subfolder):
     data_path = os.path.dirname(os.getcwd())
     data_path = data_path + '/SplatGenData/'
     data_folder = data_path + subfolder
     try:
-        file_to_load = data_folder + 'dropouts.csv'
+        file_to_load = data_folder + 'counts.csv'
         with open(file_to_load) as data_file:
             ncols = len(data_file.readline().split(','))
-            X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
+            X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
         Y = np.matrix(X)
     except FileNotFoundError:
-        file_to_load = data_folder + ' dropouts.csv'
+        file_to_load = data_folder + ' counts.csv'
         with open(file_to_load) as data_file:
             ncols = len(data_file.readline().split(','))
             X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
         Y = np.matrix(X)
     return Y
+
+# [input]: subfolder of SplatGenData where csv lives, name of csv. Also can load .csv.gz (g-zipped csv)
+# behaviour: skips the first row and first column
+def load_csv_to_matrix(subfolder,name):
+    data_path = os.path.dirname(os.getcwd())
+    data_path = data_path + '/SplatGenData/'
+    data_folder = data_path + subfolder
+    file_name = data_folder + name
+    with open(file_name) as data_file:
+        ncols = len(data_file.readline().split(','))
+        X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
+    Y = np.matrix(X)
+    return Y
+
+# [input]: classification vector and subfolder of SplatGenData to which it belongs
+# [output]: 1 if successful?
+#writes classification as classification.csv in the desired subfolder
+def write_classification(classification,subfolder):
+    data_path = os.path.dirname(os.getcwd())
+    data_path = data_path + '/SplatGenData/'
+    data_folder = data_path + subfolder
+    file_name = data_folder + 'classification.csv'
+
+# [input]: mask, subfolder of SplatGenData to which it belongs, name to save (usually "tight" or "loose") including extension. Allows gz zipping (e.g. give name "tightmask.csv.gz").
+# [output]: 1 if successful?
+def write_matrix_to_data(matrix,subfolder,name):
+    data_path = os.path.dirname(os.getcwd())
+    data_path = data_path + '/SplatGenData/'
+    data_folder = data_path + subfolder
+    file_name = data_folder + name
+    np.savetxt(file_name,matrix,delimiter=',')
+
 
 def test():
     row = 50
@@ -175,21 +208,49 @@ def test():
     axs[5].imshow(TightMask)
     plt.savefig("0-1_reconstruction", dpi=600)
 
+
 def main():
-    X = load_dropouts('5_groups_10000_cells_1000_genes/')
+    subfolder = '5_groups_1000_cells_5000_genes/';
+    X = load_counts(subfolder)
     [row,col] = np.shape(X)
+    
+    # Binarize counts matrix
+    X_binary = np.where(X>0, 1,0)
 
-#    threshold_ratio = # TODO take as argument see description in documentation
-#    rank = # TODO take as an argument (should be an upper bound on clustering)
-#    
-#    TightMask, LooseMask, classification = cluster_span(X, rank, threshold_ratio)
+    threshold_ratio = 0.2  # TODO take as argument see description in documentation
+    rank = 5 # TODO take as an argument (should be an upper bound on clustering)
 
-    # TODO save TightMask LooseMask
+    # Run the technical zero finding algorithm
+    TightMask, LooseMask, classification = cluster_span(X_binary, rank, threshold_ratio)
+
+    # Save TightMask, LooseMask, Classification
+    write_matrix_to_data(TightMask,subfolder,'tight_mask.csv.gz')
+    write_matrix_to_data(LooseMask,subfolder,'loose_mask.csv.gz')
+    write_matrix_to_data(classification,subfolder,'classification.csv')
+
     # TODO print some performance stuff? Number of technical zeros detected (hopefully)
-    # Also, it might be nice to see what happens when we reorder X and masks
-    # based on classification of cells to see how things line up
+
+    # \Jeremy: I'm not going to write the matrix with this reordering because I want the
+    # saved matrix to have the same cell-ordering as the input. But we can make figures now
+    # and they'll look reordered by classification
+    sorted_indices = np.argsort(classification)
+    idx = np.empty_like(sorted_indices)
+    idx[sorted_indices] = np.arange(len(sorted_indices))
+    TightMask[:] = TightMask[:, idx]
+    LooseMask[:] =LooseMask[:, idx]
+    classification[:] = classification[sorted_indices]
     
-    
+    # TODO: Should try to compute differentially expressed genes (genes that differ btwn cell types)
+    # and only plot those .
+    # TODO: load ground truth (if available) and also display that.
+    fig, axs = plt.subplots(4)
+    fig.suptitle('0-1 reconstruction')
+    axs[0].imshow(classification.reshape(col,1).T)
+    axs[1].imshow(X_binary)
+    axs[2].imshow(LooseMask)
+    axs[3].imshow(TightMask)
+    plt.savefig("0-1_reconstruction_jp", dpi=600)
+
 
 if __name__ == '__main__':
     main()
