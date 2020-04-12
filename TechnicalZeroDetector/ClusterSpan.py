@@ -19,38 +19,58 @@ class VecCluster:
         self.pop = np.zeros(n)
         # number of vectors thats is assigned and covered by this vec
         self.num_vec = 0
+        self.n_pop_sum = 0
+        self.modified = False
         
     def SV(self):
         return 1 * (self.pop > 0)
         
     def score(self):
         return self.num_vec * sum(self.pop > 0) - sum(self.pop)
+    
+    # returns increase in the score
+    def checkAddVec(self, V):
+        self.update_n_pop_sum()
+        return (self.num_vec + 1) * sum(self.pop + V > 0)\
+            - self.n_pop_sum - sum(V)
+            
+    def update_n_pop_sum(self):
+        if self.modified:
+            self.modified = False
+            self.n_pop_sum = self.num_vec * sum(self.pop > 0)
         
     # Expects a 0-1 vector in  {0,1}^n
     # Returns the increase in score
     def addVec(self, V):
-        old_score = self.score()
         self.pop += V
         self.num_vec += 1
-        return self.score() - old_score
+        self.modified = True
         
     # One can only remove vectors that was added before!
     def removeVec(self, V):
         self.pop -= V
         self.num_vec -= 1
-        self.checkInvariant()
+        self.modified = True
+        #self.checkInvariant()
+        
+        #Returns increase in score
+    def checkAddVecCluster(self, VC):
+        self.update_n_pop_sum()
+        return (self.num_vec + VC.num_vec) * sum(self.pop + VC.pop)\
+            -self.n_pop_sum - sum(VC.pop)
+        
         
     # Returns the increase in score
     def addVecCluster(self, VC):
-        old_score = self.score()
         self.pop += VC.pop
         self.num_vec += VC.num_vec
-        return self.score() - old_score
+        self.modified = True
         
     def removeVecCluster(self, VC):
         self.pop -= VC.pop
         self.num_vec -= VC.num_vec
-        self.checkInvariant()
+        self.modified = True
+        #self.checkInvariant()
         
     def checkInvariant(self):
         assert(self.num_vec >= 0)
@@ -60,9 +80,8 @@ def improve_clustering(X, rank, init_label = [],
                                num_steps = float("inf")):
     [r,c] = np.shape(X)
     SupportVectors = [VecCluster(r) for i in range(rank)]
-    def score():
-        return sum([sv.score() for sv in SupportVectors])
-    
+
+    score = 0
     labels = []
     if len(init_label) == 0:
         labels = [-1 for i in range(c)]
@@ -70,38 +89,45 @@ def improve_clustering(X, rank, init_label = [],
         labels = init_label
         for i in range(c):
             SupportVectors[labels[i]].addVec(X[:,i])
-        print("initial score", score())
+        score = sum([sv.score() for sv in SupportVectors])
+        print("initial score", score)
     else:
         print("ERROR! expected init_label size of",c, 
               "but got", len(init_label))
         
-    
     #shift vectors
     #returns number of vectors moved
     def shift_vec():
+        change_in_score = 0
         num_changed = 0
         for i in range(c):
             if labels[i] != -1:
                 SupportVectors[labels[i]].removeVec(X[:,i])
                 
+            decrease_in_score = 0 #from removing from previous
             min_increase_in_score = float("inf")
             min_idx = labels[i] # this makes it so that we don't change labels often
             for sv in range(rank):
-                increase_in_score = SupportVectors[sv].addVec(X[:,i])
-                SupportVectors[sv].removeVec(X[:,i])
+                increase_in_score = SupportVectors[sv].checkAddVec(X[:,i])
+                assert(increase_in_score >= 0)
                 if increase_in_score < min_increase_in_score:
                     min_increase_in_score = increase_in_score
                     min_idx = sv
+                if sv == labels[i]:
+                    decrease_in_score = increase_in_score
             SupportVectors[min_idx].addVec(X[:,i])
             if min_idx != labels[i]:
                 labels[i] = min_idx
                 num_changed += 1
+                change_in_score += + min_increase_in_score - decrease_in_score
+                assert(min_increase_in_score - decrease_in_score <= 0)
                 
-        return num_changed
+        return num_changed, change_in_score
             
     #shift sub clusters (all vec in a cluster that has a 1 on a certain row)
     #returns number of sub clusters moved
     def shift_sub_cluster():
+        change_in_score = 0
         num_changed = 0
         for i in range(rank):
             for row in range(r):
@@ -117,15 +143,19 @@ def improve_clustering(X, rank, init_label = [],
                 SupportVectors[i].removeVecCluster(sub_vec_cluster)
                         
                 min_increase_in_score = float("inf")
+                decrease_in_score = 0
                 min_cluster = i
                 for sv in range(rank):
-                    increase_in_score = SupportVectors[sv].addVecCluster(sub_vec_cluster)
-                    SupportVectors[sv].removeVecCluster(sub_vec_cluster)
+                    increase_in_score = SupportVectors[sv].checkAddVecCluster(sub_vec_cluster)
                     if increase_in_score < min_increase_in_score:
                         min_increase_in_score = increase_in_score
                         min_cluster = sv
+                    if sv == i:
+                        decrease_in_score = increase_in_score
                 SupportVectors[min_cluster].addVecCluster(sub_vec_cluster)
                 if min_cluster != i:
+                    change_in_score += min_increase_in_score - decrease_in_score
+                    assert(min_increase_in_score - decrease_in_score <= 0)
                     # We need to move!
                     for idx in sub_vec_cluster_idx:
                         labels[idx] = min_cluster
@@ -136,19 +166,25 @@ def improve_clustering(X, rank, init_label = [],
     cluster_stopped = False
     num_iter_finished = 0
     while True:
-        vec_changed = shift_vec()
-        print("shifted", vec_changed,"vectors score:",score())
+        vec_changed, score_changed = shift_vec()
+        assert(score_changed <= 0)
+        score += score_changed
+        print("shifted", vec_changed, "score", score)
         vec_stopped = vec_changed == 0
         if vec_stopped and cluster_stopped:
             break
         cluster_changed = shift_sub_cluster()
-        print("shifted", cluster_changed,"sub clusters score:", score())
+        assert(score_changed <= 0)
+        score += score_changed
+        print("shifted", cluster_changed, "score", score)
         cluster_stopped = cluster_changed == 0
         if vec_stopped and cluster_stopped:
             break
         num_iter_finished += 1
         if num_iter_finished == num_steps:
             print("Terminating early due to reaching maximum number of iterations")
+            break
+        
         
     return SupportVectors, labels
 
@@ -198,7 +234,8 @@ WARNING: As of now, your working directory should be the TechnicalZeroDetector/
 folder in order for the load function to work correctly.
 '''
 
-def cluster_span(X, rank, threshold_ratio):
+def cluster_span(X_input, rank, threshold_ratio):
+    X = X_input.copy()
     [r,c] = np.shape(X)
     # Run kmeans to get a general idea of clustering
     kmeans = KMeans(n_clusters=rank).fit(X.T)
@@ -280,23 +317,32 @@ def random_mat(r,c,rank,sparcity):
             
     return X
 
-def load_counts(subfolder):
+def load_helper(subfolder, fname):
     data_path = os.path.dirname(os.getcwd())
     data_path = data_path + '/SplatGenData/'
     data_folder = data_path + subfolder
     try:
-        file_to_load = data_folder + 'counts.csv'
+        file_to_load = data_folder + fname
         with open(file_to_load) as data_file:
             ncols = len(data_file.readline().split(','))
             X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
         Y = np.matrix(X)
     except FileNotFoundError:
-        file_to_load = data_folder + ' counts.csv'
+        file_to_load = data_folder + fname
         with open(file_to_load) as data_file:
             ncols = len(data_file.readline().split(','))
             X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
         Y = np.matrix(X)
     return Y
+
+def load_counts(subfolder):
+    return load_helper(subfolder, 'counts.csv')
+
+def load_true_counts(subfolder):
+    return load_helper(subfolder, 'true_counts.csv')
+
+def load_classification(subfolder):
+    return load_helper(subfolder, 'classification.csv')
 
 # [input]: subfolder of SplatGenData where csv lives, name of csv. Also can load .csv.gz (g-zipped csv)
 # behaviour: skips the first row and first column
@@ -363,18 +409,29 @@ def test():
 
 
 def main():
-    subfolder = '5_groups_1000_cells_5000_genes/';
+    #subfolder = 'two_cell_types_50_sparse/'
+    subfolder = '5_groups_10000_cells_1000_genes/';
     X = load_counts(subfolder)
+    X_true = load_true_counts(subfolder)
+    X_true[X_true > 0] = 1
+    print("Finished loading")
     [row,col] = np.shape(X)
     
     # Binarize counts matrix
     X_binary = np.where(X>0, 1,0)
 
-    threshold_ratio = 0.2  # TODO take as argument see description in documentation
+    threshold_ratio = 0.4  # TODO take as argument see description in documentation
     rank = 5 # TODO take as an argument (should be an upper bound on clustering)
 
     # Run the technical zero finding algorithm
+    print("starting cluster_span")
     TightMask, LooseMask, classification = cluster_span(X_binary, rank, threshold_ratio)
+    print("finished cluster_span")
+    SV, SVclassification = improve_clustering(X_binary, rank, classification.astype(int), 1)
+    print("finished deter")
+    X_SV = np.zeros([row, col])
+    for i in range(col):
+        X_SV[:,i] = SV[SVclassification[i]].SV()
 
     # Save TightMask, LooseMask, Classification
     write_matrix_to_data(TightMask,subfolder,'tight_mask.csv.gz')
@@ -393,15 +450,18 @@ def main():
     LooseMask[:] =LooseMask[:, idx]
     classification[:] = classification[sorted_indices]
     
+    print("Generating figures")
+    
     # TODO: Should try to compute differentially expressed genes (genes that differ btwn cell types)
     # and only plot those .
     # TODO: load ground truth (if available) and also display that.
-    fig, axs = plt.subplots(4)
+    fig, axs = plt.subplots(5)
     fig.suptitle('0-1 reconstruction')
-    axs[0].imshow(classification.reshape(col,1).T)
+    axs[0].imshow(X_true)
     axs[1].imshow(X_binary)
     axs[2].imshow(LooseMask)
     axs[3].imshow(TightMask)
+    axs[4].imshow(X_SV)
     plt.savefig("0-1_reconstruction_jp", dpi=600)
 
 
