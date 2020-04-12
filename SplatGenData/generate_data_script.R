@@ -3,7 +3,7 @@ library(splatter)
 ### Parameters (choose wisely) ###
 random_seed <- 43
 num_cells <- 1000
-num_genes <- 5000
+num_genes <- 10000
 num_groups <- 10
 dropout <- 1 #boolean valued for now
 dropout.mid.value <- 2
