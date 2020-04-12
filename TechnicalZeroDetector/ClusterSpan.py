@@ -10,6 +10,159 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import os
 
+class VecCluster:
+    # n number of rows
+    def __init__(self, n):
+        self.n = n # number of rows
+        # number of vectors that is 1 for this entry
+        # sv = sum of vectors added
+        self.pop = np.zeros(n)
+        # number of vectors thats is assigned and covered by this vec
+        self.num_vec = 0
+        
+    def SV(self):
+        return 1 * (self.pop > 0)
+        
+    def score(self):
+        return self.num_vec * sum(self.pop > 0) - sum(self.pop)
+        
+    # Expects a 0-1 vector in  {0,1}^n
+    # Returns the increase in score
+    def addVec(self, V):
+        old_score = self.score()
+        self.pop += V
+        self.num_vec += 1
+        return self.score() - old_score
+        
+    # One can only remove vectors that was added before!
+    def removeVec(self, V):
+        self.pop -= V
+        self.num_vec -= 1
+        self.checkInvariant()
+        
+    # Returns the increase in score
+    def addVecCluster(self, VC):
+        old_score = self.score()
+        self.pop += VC.pop
+        self.num_vec += VC.num_vec
+        return self.score() - old_score
+        
+    def removeVecCluster(self, VC):
+        self.pop -= VC.pop
+        self.num_vec -= VC.num_vec
+        self.checkInvariant()
+        
+    def checkInvariant(self):
+        assert(self.num_vec >= 0)
+        assert((self.pop >= 0).all())
+
+def improve_clustering(X, rank, init_label = [], 
+                               num_steps = float("inf")):
+    [r,c] = np.shape(X)
+    SupportVectors = [VecCluster(r) for i in range(rank)]
+    def score():
+        return sum([sv.score() for sv in SupportVectors])
+    
+    labels = []
+    if len(init_label) == 0:
+        labels = [-1 for i in range(c)]
+    elif len(init_label) == c:
+        labels = init_label
+        for i in range(c):
+            SupportVectors[labels[i]].addVec(X[:,i])
+        print("initial score", score())
+    else:
+        print("ERROR! expected init_label size of",c, 
+              "but got", len(init_label))
+        
+    
+    #shift vectors
+    #returns number of vectors moved
+    def shift_vec():
+        num_changed = 0
+        for i in range(c):
+            if labels[i] != -1:
+                SupportVectors[labels[i]].removeVec(X[:,i])
+                
+            min_increase_in_score = float("inf")
+            min_idx = labels[i] # this makes it so that we don't change labels often
+            for sv in range(rank):
+                increase_in_score = SupportVectors[sv].addVec(X[:,i])
+                SupportVectors[sv].removeVec(X[:,i])
+                if increase_in_score < min_increase_in_score:
+                    min_increase_in_score = increase_in_score
+                    min_idx = sv
+            SupportVectors[min_idx].addVec(X[:,i])
+            if min_idx != labels[i]:
+                labels[i] = min_idx
+                num_changed += 1
+                
+        return num_changed
+            
+    #shift sub clusters (all vec in a cluster that has a 1 on a certain row)
+    #returns number of sub clusters moved
+    def shift_sub_cluster():
+        num_changed = 0
+        for i in range(rank):
+            for row in range(r):
+                sub_vec_cluster = VecCluster(r)
+                sub_vec_cluster_idx = []
+                for j in range(c):
+                    if X[row,j] == 1 and labels[j] == i:
+                        sub_vec_cluster.addVec(X[:,j])
+                        sub_vec_cluster_idx.append(j)
+                if len(sub_vec_cluster_idx) == 0:
+                    continue
+                
+                SupportVectors[i].removeVecCluster(sub_vec_cluster)
+                        
+                min_increase_in_score = float("inf")
+                min_cluster = i
+                for sv in range(rank):
+                    increase_in_score = SupportVectors[sv].addVecCluster(sub_vec_cluster)
+                    SupportVectors[sv].removeVecCluster(sub_vec_cluster)
+                    if increase_in_score < min_increase_in_score:
+                        min_increase_in_score = increase_in_score
+                        min_cluster = sv
+                SupportVectors[min_cluster].addVecCluster(sub_vec_cluster)
+                if min_cluster != i:
+                    # We need to move!
+                    for idx in sub_vec_cluster_idx:
+                        labels[idx] = min_cluster
+                    num_changed += 1
+        return num_changed
+            
+    vec_stopped = False
+    cluster_stopped = False
+    num_iter_finished = 0
+    while True:
+        vec_changed = shift_vec()
+        print("shifted", vec_changed,"vectors score:",score())
+        vec_stopped = vec_changed == 0
+        if vec_stopped and cluster_stopped:
+            break
+        cluster_changed = shift_sub_cluster()
+        print("shifted", cluster_changed,"sub clusters score:", score())
+        cluster_stopped = cluster_changed == 0
+        if vec_stopped and cluster_stopped:
+            break
+        num_iter_finished += 1
+        if num_iter_finished == num_steps:
+            print("Terminating early due to reaching maximum number of iterations")
+        
+    return SupportVectors, labels
+
+def test_cluster_span_deterministic():
+    X = np.zeros([4,6])
+    X[:,0] = 1
+    X[:, 1] = [1,1,0,0]
+    X[:, 2] = [0,0,1,1]
+    X[:,3] = [0,1,1,0]
+    X[:,4] = X[:,3]
+    X[:,5] = X[:,3]
+    improve_clustering(X, 2)
+    
+
 """
 [Input]
 X: 0-1 matrix. Column for each cell, row for each gene
@@ -154,25 +307,25 @@ def test():
     cor_mat = np.random.rand(row, col)
     X_corrupted = np.zeros([row, col])
     X_corrupted[cor_mat > dropoff] = X[cor_mat > dropoff]
-    TightMask, LooseMask, classification = cluster_span(X_corrupted, rank, 0.2)
+    TightMask, LooseMask, classification = cluster_span(X_corrupted.copy(), rank, 0.07)
+
+    SV, SVclassification = improve_clustering(X_corrupted.copy(), 
+                                                      rank, classification.astype(int))
     
-    kmeans = KMeans(n_clusters=rank).fit(X_corrupted.T)
-    X_weighted = X_corrupted.copy()
-    X_weighted[X_weighted == 0] = -0.5
+    print("finished deter")
+    X_SV = np.zeros([row, col])
+    for i in range(col):
+        X_SV[:,i] = SV[SVclassification[i]].SV()
+        
     
-    kmeans_weighted = KMeans(n_clusters=rank).fit(X_weighted.T)
     
-    
-    print(np.shape(TightMask))
-    
-    fig, axs = plt.subplots(6)
+    fig, axs = plt.subplots(5)
     fig.suptitle('0-1 reconstruction')
-    axs[0].imshow(kmeans.labels_.reshape(col,1).T)
-    axs[1].imshow(classification.reshape(col,1).T)
-    axs[2].imshow(X)
-    axs[3].imshow(X_corrupted)
-    axs[4].imshow(LooseMask)
-    axs[5].imshow(TightMask)
+    axs[0].imshow(X)
+    axs[1].imshow(X_corrupted)
+    axs[2].imshow(LooseMask)
+    axs[3].imshow(TightMask)
+    axs[4].imshow(X_SV)
     plt.savefig("0-1_reconstruction", dpi=600)
 
 def main():
