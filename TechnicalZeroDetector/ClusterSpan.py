@@ -336,14 +336,16 @@ def load_helper(subfolder, fname):
     try:
         file_to_load = data_folder + fname
         with open(file_to_load) as data_file:
-            ncols = len(data_file.readline().split(','))
-            X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
+#            ncols = len(data_file.readline().split(','))
+#            X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
+            X = np.genfromtxt(data_file,dtype = 'int_',delimiter=' ')
         Y = np.matrix(X)
     except FileNotFoundError:
         file_to_load = data_folder + fname
         with open(file_to_load) as data_file:
-            ncols = len(data_file.readline().split(','))
-            X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
+#            ncols = len(data_file.readline().split(','))
+#            X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
+            X = np.genfromtxt(data_file,delimiter=' ')
         Y = np.matrix(X)
     return Y
 
@@ -364,8 +366,9 @@ def load_csv_to_matrix(subfolder,name):
     data_folder = data_path + subfolder
     file_name = data_folder + name
     with open(file_name) as data_file:
-        ncols = len(data_file.readline().split(','))
-        X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
+#        ncols = len(data_file.readline().split(','))
+#        X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
+        X = np.genfromtxt(data_file,dtype = 'int_',delimiter=' ')
     Y = np.matrix(X)
     return Y
 
@@ -428,7 +431,7 @@ def main():
     X_true[X_true > 0] = 1
     print("Finished loading")
     [row,col] = np.shape(X)
-    
+    print(row,col)
     # Binarize counts matrix
     X_binary = np.where(X>0, 1,0)
 
