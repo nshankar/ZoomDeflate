@@ -2,15 +2,15 @@ library(splatter)
 
 ### Parameters (choose wisely) ###
 random_seed <- 43
-num_cells <- 10000
-num_genes <- 1000
+num_cells <- 1000
+num_genes <- 5000
 num_groups <- 10
 dropout <- 1 #boolean valued for now
 dropout.mid.value <- 2
 dropout.shape.value <- -1
 
-PATHNAME <- "/Users/nikhil/Documents/College/Math 651/ZoomDeflate/SplatGenData/10_groups_10000_cells_1000_genes/"
-
+PATHNAME <- paste("/Users/nikhil/Documents/College/Math 651/ZoomDeflate/SplatGenData/", 
+                  num_groups,"_groups_", num_cells, "_cells_", num_genes, "_genes/", sep="")
 ### Run simulation ###
 params <- newSplatParams()
 params <- setParam(params, "seed", random_seed)
@@ -41,9 +41,20 @@ sum(rowSums(counts(sim) == 0))
 
 ### Save data and metadata (which metadata is important?) ###
 dir.create(PATHNAME)
-write.csv(counts(sim), paste(PATHNAME, "counts.csv"))
+write.table(counts(sim), paste(PATHNAME, "counts.csv", sep=""), row.names=FALSE, col.names=FALSE)
 if(dropout) {
-  write.csv(assays(sim)[["TrueCounts"]], paste(PATHNAME, "true_counts.csv"))
-  write.csv(assays(sim)[["Dropout"]]*1, paste(PATHNAME, "dropouts.csv"))
+  write.table(assays(sim)[["TrueCounts"]], paste(PATHNAME, "true_counts.csv", sep=""), row.names=FALSE, col.names=FALSE)
+  write.table(assays(sim)[["Dropout"]]*1, paste(PATHNAME, "dropouts.csv", sep=""), row.names=FALSE, col.names=FALSE)
+}
+if(num_groups > 1) {
+  groupData = sapply(sim@colData@listData[["Group"]], function(s) 
+                  for (i in 1:num_groups) {
+                    if (s == paste("Group", i, sep="")) {
+                      return(i)
+                    }
+                  }
+                )
+                  
+  write.table(groupData, paste(PATHNAME, "group_data.csv", sep=""), row.names=FALSE, col.names=FALSE)
 }
 
