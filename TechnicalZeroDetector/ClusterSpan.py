@@ -8,6 +8,7 @@ Created on Thu Apr  9 14:44:17 2020
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+from sklearn.cluster import SpectralClustering
 import os
 
 class VecCluster:
@@ -77,7 +78,8 @@ class VecCluster:
         assert((self.pop >= 0).all())
 
 def improve_clustering(X, rank, init_label = [], 
-                               num_steps = float("inf")):
+                               num_steps = float("inf"), check_sub_cluster=True):
+        
     [r,c] = np.shape(X)
     SupportVectors = [VecCluster(r) for i in range(rank)]
 
@@ -169,14 +171,17 @@ def improve_clustering(X, rank, init_label = [],
         vec_changed, score_changed = shift_vec()
         assert(score_changed <= 0)
         score += score_changed
-        print("shifted", vec_changed, "score", score)
+        print("shifted", vec_changed, "vectors. score", score)
         vec_stopped = vec_changed == 0
         if vec_stopped and cluster_stopped:
             break
-        cluster_changed = shift_sub_cluster()
-        assert(score_changed <= 0)
+        if check_sub_cluster:
+            cluster_changed = shift_sub_cluster()
+            assert(score_changed <= 0)
+        else:
+            cluster_changed = 0
         score += score_changed
-        print("shifted", cluster_changed, "score", score)
+        print("shifted", cluster_changed, "sub clusters. score", score)
         cluster_stopped = cluster_changed == 0
         if vec_stopped and cluster_stopped:
             break
@@ -232,17 +237,24 @@ such that each cell fits in very "tight" to some spanning vector V_i
 ''' 
 WARNING: As of now, your working directory should be the TechnicalZeroDetector/ 
 folder in order for the load function to work correctly.
+clustering is either kmeans or spectral
 '''
 
-def cluster_span(X_input, rank, threshold_ratio):
+def cluster_span(X_input, rank, threshold_ratio, clustering='spectral'):
     X = X_input.copy()
     [r,c] = np.shape(X)
     # Run kmeans to get a general idea of clustering
-    kmeans = KMeans(n_clusters=rank).fit(X.T)
+    labels = None
+    if clustering == 'spectral':
+        scluster = SpectralClustering(n_clusters=rank, affinity='precomputed').fit(np.matmul(X.T,X))
+        labels = scluster.labels_
+    elif clustering == 'kmeans':
+        kmeans = KMeans(n_clusters=rank).fit(X.T)
+        labels = kmeans.labels_
     
     # Get some genes we are confident that belongs to the clusters
     # this partially initializes spanning vectors
-    clusters = [X[:,kmeans.labels_ == i] for i in range(rank)]
+    clusters = [X[:,labels == i] for i in range(rank)]
     span_vec = [np.zeros(r) for i in range(rank)]
     non_one_val = -1
     for i in range(rank):
@@ -410,7 +422,7 @@ def test():
 
 def main():
     #subfolder = 'two_cell_types_50_sparse/'
-    subfolder = '5_groups_10000_cells_1000_genes/';
+    subfolder = '5_groups_1000_cells_5000_genes/';
     X = load_counts(subfolder)
     X_true = load_true_counts(subfolder)
     X_true[X_true > 0] = 1
@@ -425,14 +437,14 @@ def main():
 
     # Run the technical zero finding algorithm
     print("starting cluster_span")
-    TightMask, LooseMask, classification = cluster_span(X_binary, rank, threshold_ratio)
+    TightMask, LooseMask, classification = cluster_span(X_binary, rank, threshold_ratio, 'kmeans')
     print("finished cluster_span")
-    SV, SVclassification = improve_clustering(X_binary, rank, classification.astype(int), 1)
+    SV, SVclassification = improve_clustering(X_binary, rank, classification.astype(int), 1, check_sub_cluster=False)
     print("finished deter")
     X_SV = np.zeros([row, col])
     for i in range(col):
         X_SV[:,i] = SV[SVclassification[i]].SV()
-
+    
     # Save TightMask, LooseMask, Classification
     write_matrix_to_data(TightMask,subfolder,'tight_mask.csv.gz')
     write_matrix_to_data(LooseMask,subfolder,'loose_mask.csv.gz')
@@ -455,7 +467,7 @@ def main():
     # TODO: Should try to compute differentially expressed genes (genes that differ btwn cell types)
     # and only plot those .
     # TODO: load ground truth (if available) and also display that.
-    fig, axs = plt.subplots(5)
+    fig, axs = plt.subplots(1,5)
     fig.suptitle('0-1 reconstruction')
     axs[0].imshow(X_true)
     axs[1].imshow(X_binary)
