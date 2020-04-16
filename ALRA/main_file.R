@@ -4,7 +4,7 @@ library(ggplot2)
 library(dplyr)
 library(hrbrthemes)
 source('ALRA/alra.R')
-
+source('ALRA/jp_utilities.R')
 set.seed(41) # Some ML projects make this seed a hyper-parameter
 
 
@@ -29,6 +29,14 @@ truth <- t(truth)
 truth <- normalize_data(truth)
 # turn mask into logical array for logical indexing 
 mask <- mask == 1
+# 
+# # Calculate biological and technical zeros
+# bio_zeros_mask <- (truth == 0)
+# tech_zeros_mask <- (truth != 0) & (mask)
+# 
+# frac_bio_zeros <- sum(bio_zeros_mask) / length(truth)
+# frac_tech_zeros <- sum(tech_zeros_mask) / length(truth)
+
 
 # Library and log normalize the data
 A_norm <- normalize_data(data)
@@ -38,30 +46,44 @@ k_choice <- choose_k(A_norm)
 # print(k_choice)
 
 # complete matrix using ALRA
-# A_norm_completed <- alra(A_norm,k=k_choice$k)[[3]]
-A_norm_completed <- alra(A_norm,k=5)[[3]]
+A_norm_completed <- alra(A_norm,k=k_choice$k)[[3]]
+#A_norm_completed <- alra(A_norm,k=5)[[3]]
+
+zero_stats <- zero_quality_stats(mask, truth, A_norm_completed)
+print(zero_stats)
+  
 
 # Calculate RMSE for all values, 
 difference <- A_norm_completed - truth
 RMSE_all <- sqrt(sum(difference^2) / (length(truth)))
 print(RMSE_all)
 
-reconned_dropouts <- A_norm_completed[mask]
-truth_dropouts <- truth[mask]
+reconned_dropouts <- A_norm_completed[tech_zeros_mask]
+truth_dropouts <- truth[tech_zeros_mask]
 
 RMSE_reconned <- sqrt(sum((reconned_dropouts - truth_dropouts)^2) / length(truth_dropouts))
 print(RMSE_reconned)
 
-reconned_nondropped <- A_norm_completed[!mask]
-truth_nondropped <- truth[!mask]
+reconned_nondropped <- A_norm_completed[!tech_zeros_mask]
+truth_nondropped <- truth[!tech_zeros_mask]
 
 RMSE_nondropped <- sqrt(sum((reconned_nondropped - truth_nondropped)^2) / length(truth_nondropped))
 print(RMSE_nondropped)
+# 
+# # Count biological zeros preserved
+# bio_zeros_preserved <- sum(A_norm_completed[bio_zeros_mask] == 0) 
+# frac_bio_zeros_preserved <- bio_zeros_preserved / sum(bio_zeros_mask)
+# print(frac_bio_zeros_preserved)
+# 
+# # Count technical zeros reconstructed
+# tech_zeros_reconned <- sum(A_norm_completed[tech_zeros_mask] != 0) 
+# frac_tech_zeros_reconned <- tech_zeros_reconned / sum(tech_zeros_mask)
+# print(frac_tech_zeros_reconned)
 
 # histogram of dropout entries
 data <- data.frame(
   type = c( rep("Reconned dropouts", length(reconned_dropouts)), rep("True dropouts", length(truth_dropouts))),
-  value = c( log(reconned_dropouts), log(truth_dropouts) )
+  value = c( reconned_dropouts, truth_dropouts )
 )
 
 p1 <- data %>%
