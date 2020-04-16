@@ -1,35 +1,20 @@
+# Nikhil's wd
+setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/softImputeRecon')
+
+# Jeremy's wd
+# todo
+
 library(softImpute)
-source("/Users/nikhil/Documents/College/Math 651/ZoomDeflate/ALRA/alra.R")
-
-
-
-unnormalize_data <- function(A, og_col_sums) {
-  # invert the function normalize_data from alra.R
-  A <- (exp(A) - 1)/1E4
-  A <- sweep(A, 2, col_sums_data, '*')
-  return(A)
-}
-
-myColSums <- function(A) {
-  # get column sums, meant to work specifically with normalize_data from alra.R
-  col_sums= colSums(A)
-  if (any(col_sums == 0)) {
-    toRemove <- which(col_sums == 0)
-    data <- data[,-toRemove]
-    col_sums <- col_sums[-toRemove]
-  }
-  return(col_sums)
-}
-
+source("../ALRA/alra.R")
+source("../ALRA/jp_utilities.R")
 
 # Currently cheating by using the true dropouts as a mask
 # In the future, use predicted dropouts as a mask
 ### PATHNAME is currently for Nikhil's computer, fix soon ###
-
 nCells = 1000
 nGenes = 5000
 
-PATHNAME = "/Users/nikhil/Documents/College/Math 651/ZoomDeflate/SplatGenData/5_groups_1000_cells_5000_genes/"
+PATHNAME = "../SplatGenData/5_groups_1000_cells_5000_genes/"
 MASK_PATHNAME = paste(PATHNAME, "dropouts.csv", sep="")
 DATA_PATHNAME = paste(PATHNAME, "true_counts.csv", sep="")
 

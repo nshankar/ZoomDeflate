@@ -23,3 +23,20 @@ return (list(frac_bio_zeros_preserved = frac_bio_zeros_preserved,
              frac_tech_zeros_reconned = frac_tech_zeros_reconned))
  }
  
+unnormalize_data <- function(A, og_col_sums) {
+  # invert the function normalize_data from alra.R
+  A <- (exp(A) - 1)/1E4
+  A <- sweep(A, 2, col_sums_data, '*')
+  return(A)
+}
+
+myColSums <- function(A) {
+  # get column sums, meant to work specifically with normalize_data from alra.R
+  col_sums= colSums(A)
+  if (any(col_sums == 0)) {
+    toRemove <- which(col_sums == 0)
+    data <- data[,-toRemove]
+    col_sums <- col_sums[-toRemove]
+  }
+  return(col_sums)
+}
