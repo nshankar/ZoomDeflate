@@ -1,8 +1,8 @@
 # Nikhil's wd
-setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
+# setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
 
 # Jeremy's wd
-# setwd('~/Documents/Projects/ZoomDeflate/')
+setwd('~/Documents/Projects/ZoomDeflate/')
 
 # Load some libraries 
 library(softImpute)
@@ -32,9 +32,10 @@ for (size in nGroups) {
     ID = paste(size, nCells[index], nGenes[index]) # for hashing
     
     # load matrices in format: rows are genes, columns are cells
-    mask <- as.logical(as.matrix(read.csv(MASK_PATHNAME, header=FALSE, sep=" "), nrow = nCells[index], ncol = nGenes[index]))
+    mask <- as.matrix(read.csv(MASK_PATHNAME, header=FALSE, sep=" ")) # , nrow = nCells[index], ncol = nGenes[index])
     data <- as.matrix(read.csv(DATA_PATHNAME, header=FALSE, sep=" "), nrow = nCells[index], ncol = nGenes[index])
     truth <- as.matrix(read.csv(TRUE_PATHNAME, header=FALSE, sep=" "), nrow = nCells[index], ncol = nGenes[index])
+    mask <- mask == 1
     
     # some general preprocessing
     all_zeros_mask <- (data == 0)
@@ -71,7 +72,7 @@ for (size in nGroups) {
     print(zero_stats_sI)
     
     RMSE_stats_sI <- RMSE_for_sc(mask, truth, data, recon=output_sI)
-    softImpute_dict[[ID]] <- RMSE_stats_sI
+    softImpute_dict[[ID]] <- c(RMSE_stats_sI,zero_stats_sI)
     print(RMSE_stats_sI)
     
     
@@ -95,32 +96,32 @@ for (size in nGroups) {
     zero_stats_ALRA <- zero_quality_stats(mask, truth, recon=output_ALRA)
     print(zero_stats_ALRA)
     
-    RMSE_stats_ALRA <- RMSE_for_sc(mask, truth, data, recon= output_ALRA)
-    alra_dict[[ID]] <- RMSE_stats_ALRA
+    RMSE_stats_ALRA <- RMSE_for_sc(mask, truth, t(data), recon= output_ALRA)
+    alra_dict[[ID]] <- c(RMSE_stats_ALRA,zero_stats_ALRA)
     print(RMSE_stats_ALRA)
   }
 }
-  
-
+#   
+# 
 #### RMSE-hacking
-data <- t(data)
-all_zeros_mask <- t(all_zeros_mask)
-output_ALRA[!all_zeros_mask] <- data[!all_zeros_mask]
-data <- t(data)
-all_zeros_mask <- t(all_zeros_mask)
-
-# compute some statistics
-zero_stats_ALRA2 <- zero_quality_stats(t(mask), t(truth), recon=output_ALRA)
-print(zero_stats_ALRA2)
-
-RMSE_stats_ALRA2 <- RMSE_for_sc(t(mask), t(truth), t(data), recon= output_ALRA)  
-print(RMSE_stats_ALRA2)
-
-output_sI[!all_zeros_mask] <- data[!all_zeros_mask]
-
-# compute some statistics
-zero_stats_sI2 <- zero_quality_stats(mask, truth, recon=output_sI)
-print(zero_stats_sI2)
-
-RMSE_stats_sI2 <- RMSE_for_sc(mask, truth, data, recon= output_sI)  
-print(RMSE_stats_sI2)
+# data <- t(data)
+# all_zeros_mask <- t(all_zeros_mask)
+# output_ALRA[!all_zeros_mask] <- data[!all_zeros_mask]
+# data <- t(data)
+# all_zeros_mask <- t(all_zeros_mask)
+# 
+# # compute some statistics
+# zero_stats_ALRA2 <- zero_quality_stats(t(mask), t(truth), recon=output_ALRA)
+# print(zero_stats_ALRA2)
+# 
+# RMSE_stats_ALRA2 <- RMSE_for_sc(t(mask), t(truth), t(data), recon= output_ALRA)  
+# print(RMSE_stats_ALRA2)
+# 
+# output_sI[!all_zeros_mask] <- data[!all_zeros_mask]
+# 
+# # compute some statistics
+# zero_stats_sI2 <- zero_quality_stats(mask, truth, recon=output_sI)
+# print(zero_stats_sI2)
+# 
+# RMSE_stats_sI2 <- RMSE_for_sc(mask, truth, data, recon= output_sI)  
+# print(RMSE_stats_sI2)

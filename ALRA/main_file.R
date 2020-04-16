@@ -31,7 +31,6 @@ mask <- mask == 1
 
 # Collect row sums to invert the normalize_data operation
 row_sums_data = myRowSums(data)
-data <- normalize_data(data)
 
 # Library and log normalize the data
 A_norm <- normalize_data(data)
