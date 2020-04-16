@@ -5,7 +5,7 @@ library(dplyr)
 library(hrbrthemes)
 source('ALRA/alra.R')
 
-set.seed(41)# Some ML projects make this seed a hyper-parameter
+set.seed(41) # Some ML projects make this seed a hyper-parameter
 
 
 # Currently cheating by using the true dropouts as a mask
