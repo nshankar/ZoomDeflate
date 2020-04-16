@@ -30,7 +30,7 @@ normalize_data <- function (A) {
     }
 
     A_norm <- sweep(A, 1, totalUMIPerCell, '/');
-    A_norm <- A_norm * 10E3
+    A_norm <- A_norm * 1E4
     A_norm <- log(A_norm +1);
 }
 
@@ -130,7 +130,7 @@ alra <- function( A_norm, k=0,q=10, quantile.prob = 0.001, use.mkl = F, mkl.seed
     }else {
         fastDecomp_noc <- randomized.svd(A_norm,k,q=q, method='rsvd-mkl', mkl.seed=mkl.seed)
     }
-    A_norm_rank_k <- fastDecomp_noc$u[,1:k]%*%diag(fastDecomp_noc$d[1:k])%*% t(fastDecomp_noc$v[,1:k])
+    A_norm_rank_k <- fastDecomp_noc$u[,1:k] %*% diag(fastDecomp_noc$d[1:k]) %*% t(fastDecomp_noc$v[,1:k])
 
 
     cat(sprintf("Find the %f quantile of each gene\n", quantile.prob))
