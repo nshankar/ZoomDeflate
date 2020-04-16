@@ -1,8 +1,8 @@
 # Nikhil's wd
-setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/softImputeRecon')
+# setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/softImputeRecon')
 
 # Jeremy's wd
-#setwd('~/Documents/Projects/ZoomDeflate/softImputeRecon')
+setwd('~/Documents/Projects/ZoomDeflate/softImputeRecon')
 
 library(softImpute)
 library(hash)
