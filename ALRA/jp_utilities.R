@@ -61,7 +61,7 @@ RMSE_for_sc <- function(mask, truth, data, recon) {
 }
  
 ## ATT'n NIKHIL: should col_sums_data be og_col_sums in the sweep command? 
-unnormalize_data <- function(A, og_col_sums) {
+unnormalize_data <- function(A, col_sums_data) {
   # invert the function normalize_data from alra.R
   A <- (exp(A) - 1)/1E4
   A <- sweep(A, 2, col_sums_data, '*')
