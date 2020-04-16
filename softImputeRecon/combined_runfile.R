@@ -31,6 +31,8 @@ all_zeros_mask <- data == 0
 # Parameters
 nCells = NCOL(mask)
 nGenes = NROW(mask)
+print(nCells)
+print(nGenes)
 
 set.seed(41) # Some ML projects make this seed a hyper-parameter
 lambda_= 1.9  # regularization weight emphasizing the nuclear norm
@@ -46,7 +48,6 @@ truth <- t(truth)
 
 # Collect row sums to invert the normalize_data operation
 row_sums_data = myRowSums(data)
-data <- normalize_data(data)
 
 # Library/log normalize the data
 A_norm <- normalize_data(data)
@@ -59,6 +60,7 @@ output_ALRA <- alra(A_norm,k=k_choice$k)[[3]]
 
 # invert the normalize_data operation
 output_ALRA <-  unnormalize_rows(A = output_ALRA, og_row_sums = row_sums_data)
+data <- unnormalize_rows(A = output_ALRA, og_row_sums = row_sums_data)
 
 # compute some statistics
 zero_stats_ALRA <- zero_quality_stats(mask, truth, recon=output_ALRA)
@@ -73,12 +75,12 @@ mask <- t(mask)
 data <- t(data)
 truth <- t(truth) 
 
-# note that data is already scaled appropriately. 
+col_sums_data = myColSums(data)
+data <- normalize_data(data)
+print("Finished this step")
+
 # set zeros to NA (unobserved entries)
 data[all_zeros_mask] <- NA
-
-# collect column sums (row sums of transpose)
-col_sums_data <- row_sums_data
 
 #  Run soft-impute 
 if (rank.max_) {
@@ -106,4 +108,24 @@ print(RMSE_stats_sI)
 
 
 #### RMSE-hacking
-# 
+data <- t(data)
+all_zeros_mask <- t(all_zeros_mask)
+output_ALRA[!all_zeros_mask] <- data[!all_zeros_mask]
+data <- t(data)
+all_zeros_mask <- t(all_zeros_mask)
+
+# compute some statistics
+zero_stats_ALRA2 <- zero_quality_stats(t(mask), t(truth), recon=output_ALRA)
+print(zero_stats_ALRA2)
+
+RMSE_stats_ALRA2 <- RMSE_for_sc(t(mask), t(truth), t(data), recon= output_ALRA)  
+print(RMSE_stats_ALRA2)
+
+output_sI[!all_zeros_mask] <- data[!all_zeros_mask]
+
+# compute some statistics
+zero_stats_sI2 <- zero_quality_stats(mask, truth, recon=output_sI)
+print(zero_stats_sI2)
+
+RMSE_stats_sI2 <- RMSE_for_sc(mask, truth, data, recon= output_sI)  
+print(RMSE_stats_sI2)
