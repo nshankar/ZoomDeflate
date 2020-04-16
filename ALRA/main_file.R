@@ -26,10 +26,34 @@ mask <- t(mask)
 data <- t(data)
 truth <- t(truth)
 
-truth <- normalize_data(truth)
 # turn mask into logical array for logical indexing 
 mask <- mask == 1
-# 
+
+# Collect column sums to invert the normalize_data operation
+col_sums_data = myColSums(data)
+data <- normalize_data(data)
+
+# Library and log normalize the data
+A_norm <- normalize_data(data)
+
+# Choose k (# of singular values in the approximation) by measuring when they get smol. 
+k_choice <- choose_k(A_norm)
+# print(k_choice$k)
+
+# complete matrix using ALRA
+A_norm_completed <- alra(A_norm,k=k_choice$k)[[3]]
+#A_norm_completed <- alra(A_norm,k=5)[[3]]
+A_norm_completed <-  unnormalize_data(A_norm_completed, col_sums_data)
+
+
+zero_stats <- zero_quality_stats(mask, truth, recon=A_norm_completed)
+print(zero_stats)
+
+RMSE_stats <- RMSE_for_sc(mask, truth, data, recon= A_norm_completed)  
+print(RMSE_stats)
+
+
+
 # # Calculate biological and technical zeros
 # bio_zeros_mask <- (truth == 0)
 # tech_zeros_mask <- (truth != 0) & (mask)
@@ -37,85 +61,50 @@ mask <- mask == 1
 # frac_bio_zeros <- sum(bio_zeros_mask) / length(truth)
 # frac_tech_zeros <- sum(tech_zeros_mask) / length(truth)
 
+# # Get some values for plotting
+# reconned_dropouts <- A_norm_completed[tech_zeros_mask]
+# truth_dropouts <- truth[tech_zeros_mask]
+# reconned_nondropped <- A_norm_completed[!tech_zeros_mask]
+# truth_nondropped <- truth[!tech_zeros_mask]
+#
 
-# Library and log normalize the data
-A_norm <- normalize_data(data)
-
-# Choose k (# of singular values in the approximation) by measuring when they get smol. 
-k_choice <- choose_k(A_norm)
-# print(k_choice)
-
-# complete matrix using ALRA
-A_norm_completed <- alra(A_norm,k=k_choice$k)[[3]]
-#A_norm_completed <- alra(A_norm,k=5)[[3]]
-
-zero_stats <- zero_quality_stats(mask, truth, A_norm_completed)
-print(zero_stats)
-  
-
-# Calculate RMSE for all values, 
-difference <- A_norm_completed - truth
-RMSE_all <- sqrt(sum(difference^2) / (length(truth)))
-print(RMSE_all)
-
-reconned_dropouts <- A_norm_completed[tech_zeros_mask]
-truth_dropouts <- truth[tech_zeros_mask]
-
-RMSE_reconned <- sqrt(sum((reconned_dropouts - truth_dropouts)^2) / length(truth_dropouts))
-print(RMSE_reconned)
-
-reconned_nondropped <- A_norm_completed[!tech_zeros_mask]
-truth_nondropped <- truth[!tech_zeros_mask]
-
-RMSE_nondropped <- sqrt(sum((reconned_nondropped - truth_nondropped)^2) / length(truth_nondropped))
-print(RMSE_nondropped)
 # 
-# # Count biological zeros preserved
-# bio_zeros_preserved <- sum(A_norm_completed[bio_zeros_mask] == 0) 
-# frac_bio_zeros_preserved <- bio_zeros_preserved / sum(bio_zeros_mask)
-# print(frac_bio_zeros_preserved)
+# # histogram of dropout entries
+# data <- data.frame(
+#   type = c( rep("Reconned dropouts", length(reconned_dropouts)), rep("True dropouts", length(truth_dropouts))),
+#   value = c( reconned_dropouts, truth_dropouts )
+# )
 # 
-# # Count technical zeros reconstructed
-# tech_zeros_reconned <- sum(A_norm_completed[tech_zeros_mask] != 0) 
-# frac_tech_zeros_reconned <- tech_zeros_reconned / sum(tech_zeros_mask)
-# print(frac_tech_zeros_reconned)
-
-# histogram of dropout entries
-data <- data.frame(
-  type = c( rep("Reconned dropouts", length(reconned_dropouts)), rep("True dropouts", length(truth_dropouts))),
-  value = c( reconned_dropouts, truth_dropouts )
-)
-
-p1 <- data %>%
-  ggplot( aes(x=value, fill=type)) +
-  geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity',bins=100) +
-  scale_fill_manual(values=c("#69b3a2", "#404080")) +
-  theme_ipsum() +
-  labs(fill="") 
-
-# histogram of nondropout entries
-data2 <- data.frame(
-  type = c( rep("Reconned nondropped", length(reconned_nondropped)), rep("True nondropped", length(truth_nondropped))),
-  value = c( reconned_nondropped, truth_nondropped )
-)
-
-p2 <- data2 %>%
-  ggplot( aes(x=value, fill=type)) +
-  geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity',bins=100) +
-  scale_fill_manual(values=c("#69b3a2", "#404080")) +
-  theme_ipsum() +
-  labs(fill="") 
-
-# histogram of all entries
-data3 <- data.frame(
-  type = c( rep("Truth", length(truth)), rep("Reconned", length(A_norm_completed) )),
-  value = c( truth, A_norm_completed) )
-
-p3 <- data3 %>%
-  ggplot( aes(x=value, fill=type)) +
-  geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity',bins=100) +
-  scale_fill_manual(values=c("#69b3a2", "#404080")) +
-  theme_ipsum() +
-  labs(fill="") 
-
-print("I'm done running")
+# p1 <- data %>%
+#   ggplot( aes(x=value, fill=type)) +
+#   geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity',bins=100) +
+#   scale_fill_manual(values=c("#69b3a2", "#404080")) +
+#   theme_ipsum() +
+#   labs(fill="") 
+# 
+# # histogram of nondropout entries
+# data2 <- data.frame(
+#   type = c( rep("Reconned nondropped", length(reconned_nondropped)), rep("True nondropped", length(truth_nondropped))),
+#   value = c( reconned_nondropped, truth_nondropped )
+# )
+# 
+# p2 <- data2 %>%
+#   ggplot( aes(x=value, fill=type)) +
+#   geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity',bins=100) +
+#   scale_fill_manual(values=c("#69b3a2", "#404080")) +
+#   theme_ipsum() +
+#   labs(fill="") 
+# 
+# # histogram of all entries
+# data3 <- data.frame(
+#   type = c( rep("Truth", length(truth)), rep("Reconned", length(A_norm_completed) )),
+#   value = c( truth, A_norm_completed) )
+# 
+# p3 <- data3 %>%
+#   ggplot( aes(x=value, fill=type)) +
+#   geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity',bins=100) +
+#   scale_fill_manual(values=c("#69b3a2", "#404080")) +
+#   theme_ipsum() +
+#   labs(fill="") 
+# 
+# print("I'm done running")

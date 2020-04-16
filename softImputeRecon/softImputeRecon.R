@@ -1,8 +1,8 @@
 # Nikhil's wd
-setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/softImputeRecon')
+# setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/softImputeRecon')
 
 # Jeremy's wd
-# todo
+setwd('~/Documents/Projects/ZoomDeflate/softImputeRecon')
 
 library(softImpute)
 source("../ALRA/alra.R")
@@ -50,3 +50,12 @@ if (rank.max_) {
 # compute normalized output, then rescale so it is comparable with true_counts
 output <- complete(data, fits)
 output <-  unnormalize_data(output, col_sums_data)
+
+zero_stats <- zero_quality_stats(mask, truth=true_counts, recon=output)
+print(zero_stats)
+
+data2 <- data
+data2[mask] <- 0
+RMSE_stats <- RMSE_for_sc(mask, truth=true_counts, data=data2, recon=output)  
+print(RMSE_stats)
+
