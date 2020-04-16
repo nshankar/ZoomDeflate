@@ -29,7 +29,7 @@ truth <- t(truth)
 # turn mask into logical array for logical indexing 
 mask <- mask == 1
 
-# Collect column sums to invert the normalize_data operation
+# Collect row sums to invert the normalize_data operation
 row_sums_data = myRowSums(data)
 data <- normalize_data(data)
 
@@ -43,6 +43,8 @@ k_choice <- choose_k(A_norm)
 # complete matrix using ALRA
 A_norm_completed <- alra(A_norm,k=k_choice$k)[[3]]
 #A_norm_completed <- alra(A_norm,k=5)[[3]]
+
+# invert the normalize_data operation
 A_norm_completed <-  unnormalize_rows(A = A_norm_completed, og_row_sums = row_sums_data)
 
 
