@@ -73,7 +73,6 @@ myColSums <- function(A) {
   col_sums= colSums(A)
   if (any(col_sums == 0)) {
     toRemove <- which(col_sums == 0)
-    data <- data[,-toRemove]
     col_sums <- col_sums[-toRemove]
   }
   return(col_sums)
