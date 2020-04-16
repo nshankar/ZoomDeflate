@@ -1,6 +1,27 @@
 library(softImpute)
 source("/Users/nikhil/Documents/College/Math 651/ZoomDeflate/ALRA/alra.R")
 
+
+
+unnormalize_data <- function(A, og_col_sums) {
+  # invert the function normalize_data from alra.R
+  A <- (exp(A) - 1)/1E4
+  A <- sweep(A, 2, col_sums_data, '*')
+  return(A)
+}
+
+myColSums <- function(A) {
+  # get column sums, meant to work specifically with normalize_data from alra.R
+  col_sums= colSums(A)
+  if (any(col_sums == 0)) {
+    toRemove <- which(col_sums == 0)
+    data <- data[,-toRemove]
+    col_sums <- col_sums[-toRemove]
+  }
+  return(col_sums)
+}
+
+
 # Currently cheating by using the true dropouts as a mask
 # In the future, use predicted dropouts as a mask
 ### PATHNAME is currently for Nikhil's computer, fix soon ###
@@ -19,8 +40,6 @@ type_ = "als" # either als or svd, als is faster
 rank.max_ = 0 # not a necessary argument, 
               # but an estimate could be useful
 
-normalize_rows_by_noise = 0 #boolean
-
 
 mask <- as.matrix(read.table(MASK_PATHNAME), nrow = nCells, ncol = nGenes)
 mask <- as.logical(mask)
@@ -28,9 +47,10 @@ true_counts <- as.matrix(read.table(DATA_PATHNAME), nrow = nCells, ncol = nGenes
 
 #normalize in the correct order
 data <- true_counts
-true_counts <- t(normalize_data(t(true_counts)))
 data[mask] = 0
-data <- t(normalize_counts(t(data)))
+# Collect column sums to invert the normalize_data operation
+col_sums_data = myColSums(data)
+data <- t(normalize_data(t(data)))
 data[mask] = NA
 
 
@@ -42,6 +62,6 @@ if (rank.max_) {
                     trace=TRUE, type=type_)
 }
 
+# compute normalized output, then rescale so it is comparable with true_counts
 output <- complete(data, fits)
-
-diff_squared = (output - og_data)^2 #This isn't right.
+output <-  unnormalize_data(output, col_sums_data)
