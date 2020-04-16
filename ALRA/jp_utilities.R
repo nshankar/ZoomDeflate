@@ -60,6 +60,7 @@ RMSE_for_sc <- function(mask, truth, data, recon) {
              RMSE_nonzeros = RMSE_nonz))
 }
  
+## ATT'n NIKHIL: should col_sums_data be og_col_sums in the sweep command? 
 unnormalize_data <- function(A, og_col_sums) {
   # invert the function normalize_data from alra.R
   A <- (exp(A) - 1)/1E4
@@ -76,4 +77,22 @@ myColSums <- function(A) {
     col_sums <- col_sums[-toRemove]
   }
   return(col_sums)
+}
+
+myRowSums <- function(A) {
+  # get row sums, meant to work specifically with normalize_data from alra.R
+  row_sums = rowSums(A)
+  if (any(row_sums == 0)) {
+    toRemove <- which(row_sums == 0)
+    data <- data[-toRemove,]
+    row_sums <- row_sums[-toRemove]
+  }
+  return(row_sums)
+}
+
+unnormalize_rows <- function(A, og_row_sums) {
+  # invert the function normalize_data from alra.R
+  A <- (exp(A) - 1)/1E4
+  A <- sweep(A, 1, og_row_sums, '*')
+  return(A)
 }
