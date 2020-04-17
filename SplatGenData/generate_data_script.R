@@ -1,10 +1,11 @@
 library(splatter)
+library(scater)
 
 ### Parameters (choose wisely) ###
 random_seed <- 43
 num_cells <- 1000
-num_genes <- 10000
-num_groups <- 10
+num_genes <- 5000
+num_groups <- 5
 dropout <- 1 #boolean valued for now
 dropout.mid.value <- 2
 dropout.shape.value <- -1
@@ -27,7 +28,7 @@ if(num_groups > 1) {
     params <- setParam(params, "dropout.shape", dropout.shape)
     params <- setParam(params, "dropout.type", "group")
   }
-  sim <- splatSimulate(params, method = "group")
+  sim <- splatSimulate(params, method = "groups")
 } else {
   if (dropout) {
     params <- setParam(params, "dropout.mid", dropout.mid.value)
@@ -57,4 +58,8 @@ if(num_groups > 1) {
                   
   write.table(groupData, paste(PATHNAME, "group_data.csv", sep=""), row.names=FALSE, col.names=FALSE)
 }
+
+sim <- logNormCounts(sim)
+write.table(logcounts(sim), paste(PATHNAME, "log_counts.csv", sep=""), row.names=FALSE, col.names=FALSE)
+
 
