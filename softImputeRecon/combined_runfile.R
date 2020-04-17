@@ -71,7 +71,7 @@ for (size in nGroups) {
     
     # compute normalized output, then rescale so it is comparable with true_counts
     output_sI <- complete(data.normalized, fits)
-    output_sI <-  unnormalize_data(output_sI, col_sums_data)
+    output_sI <-  round(unnormalize_data(output_sI, col_sums_data))
     
     # set zeros back to 0 in data (so that alra can run)
     data.normalized[all_zeros_mask] <- 0
@@ -99,7 +99,7 @@ for (size in nGroups) {
     output_ALRA <- alra(A_norm,k=k_choice$k)[[3]]
     
     # invert the normalize_data operation
-    output_ALRA <-  unnormalize_rows(A = output_ALRA, og_row_sums = row_sums_data)
+    output_ALRA <-  round(unnormalize_rows(A = output_ALRA, og_row_sums = row_sums_data))
     
     # take transpose for better handling
     output_ALRA <- t(output_ALRA)
