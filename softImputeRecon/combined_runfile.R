@@ -1,8 +1,8 @@
 # Nikhil's wd
-# setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
+setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
 
 # Jeremy's wd
-setwd('~/Documents/Projects/ZoomDeflate/')
+#setwd('~/Documents/Projects/ZoomDeflate/')
 
 # Load some libraries 
 library(softImpute)
@@ -17,9 +17,9 @@ source('ALRA/jp_utilities.R')
 set.seed(43) # Some ML projects make this seed a hyper-parameter
 
 # Data sets to run code upon
-nGroups <- c(5)  #c(2, 5, 10)
-nCells = c(1000) #c(1000, 10000)
-nGenes = c(5000) #c(5000, 1000)
+nGroups <- c(2, 5, 10)
+nCells = c(1000, 10000)
+nGenes = c(5000, 1000)
 # Store RMSE results
 softImpute_dict <- hash()
 alra_dict <- hash()
@@ -31,7 +31,7 @@ for (size in nGroups) {
     MASK_PATHNAME = paste(PATHNAME, "dropouts.csv", sep="")
     DATA_PATHNAME = paste(PATHNAME, "counts.csv", sep="")
     TRUE_PATHNAME = paste(PATHNAME, "true_counts.csv", sep="")
-    ID = paste(size, nCells[index], nGenes[index]) # for hashing
+    ID = paste("(", size, ", ", nCells[index], ", ", nGenes[index], ")", sep="") # for hashing
     
     # load matrices in format: rows are genes, columns are cells
     mask <- as.matrix(read.csv(MASK_PATHNAME, header=FALSE, sep=" ")) # , nrow = nCells[index], ncol = nGenes[index])
@@ -75,7 +75,7 @@ for (size in nGroups) {
     
     RMSE_stats_sI <- RMSE_for_sc(mask, truth, data, recon=output_sI)
     softImpute_dict[[ID]] <- c(RMSE_stats_sI,zero_stats_sI)
-    print(RMSE_stats_sI)
+    #print(RMSE_stats_sI)
     
     
     ########### RUN ALRA ###########
@@ -100,7 +100,7 @@ for (size in nGroups) {
     
     RMSE_stats_ALRA <- RMSE_for_sc(mask, truth, t(data), recon= output_ALRA)
     alra_dict[[ID]] <- c(RMSE_stats_ALRA,zero_stats_ALRA)
-    print(RMSE_stats_ALRA)
+    #print(RMSE_stats_ALRA)
   }
 }
 #   
@@ -126,6 +126,30 @@ print(zero_stats_ALRA_hack)
 
 RMSE_stats_ALRA_hack <- RMSE_for_sc(mask, truth, trans_data, recon= output_ALRA_hack)
 print(RMSE_stats_ALRA_hack)
+
+
+### % Bio Zeros Preserved Barplot ###
+bio_zeros_preserved <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+names <- rep(NA, length(nGroups))
+for (i in 1:length(nGroups)) {
+  for (j in 1:length(nCells)){
+    ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
+    bio_zeros_preserved[j,i] <- alra_dict[[ID]]$frac_bio_zeros_preserved
+    names[i] <- nGroups[i]
+  }
+}
+
+barplot(bio_zeros_preserved,
+        main = "Preservation of Biological Zeros",
+        xlab = "# Cell Groups in Data Set",
+        ylab = "% Biological Zeros Preserved",
+        names.arg = names,
+        col = c("lightblue", "cadetblue4"),
+        beside = TRUE)
+legend("topleft", c("(# Cells, # Genes) = (1000, 5000)",
+                    "(# Cells, # Genes) = (10000, 1000)"),
+       fill = c("lightblue", "cadetblue4")
+       )
 
 ####
 # write the matrices to csv
