@@ -1,8 +1,8 @@
 # Nikhil's wd
-setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
+# setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
 
 # Jeremy's wd
-#setwd('~/Documents/Projects/ZoomDeflate/')
+setwd('~/Documents/Projects/ZoomDeflate/')
 
 # Load some libraries 
 library(softImpute)
@@ -19,11 +19,17 @@ set.seed(43) # Some ML projects make this seed a hyper-parameter
 
 # Data sets to run code upon
 nGroups <- c(2, 5, 10)
-nCells = c(1000, 10000)
-nGenes = c(5000, 1000)
+nCells <- c(1000, 10000)
+nGenes <- c(5000, 1000)
+
 # Store RMSE results
 softImpute_dict <- hash()
 alra_dict <- hash()
+merged_dict <- hash()
+softImpute_thresh_dict <- hash()
+alra_RMSE_hack_dict <- hash()
+
+alra_ranks <- hash()
 
 # Loop structure depends heavily on directory structure
 for (size in nGroups) {
@@ -87,6 +93,8 @@ for (size in nGroups) {
     # Choose k (# of singular values in the approximation) by measuring when they get smol. 
     k_choice <- choose_k(A_norm)
     
+    alra_ranks[[ID]] <- k_choice$k
+    
     # complete matrix using ALRA
     output_ALRA <- alra(A_norm,k=k_choice$k)[[3]]
     
@@ -102,13 +110,10 @@ for (size in nGroups) {
     
     RMSE_stats_ALRA <- RMSE_for_sc(mask, truth, data, recon= output_ALRA)
     alra_dict[[ID]] <- c(RMSE_stats_ALRA,zero_stats_ALRA)
-<<<<<<< HEAD
-    #print(RMSE_stats_ALRA)
-=======
+
     print(RMSE_stats_ALRA)
     
-    ########### METHOD 3 ###########
-    # TO DO: actually save the stats for this method (make a dict)
+    ########### METHOD 3:  ###########
     output_merged <- output_sI
     output_merged[output_ALRA==0] <- 0
     
@@ -117,45 +122,71 @@ for (size in nGroups) {
     
     RMSE_stats_merged <- RMSE_for_sc(mask, truth, data, recon= output_merged)
     print(RMSE_stats_merged)
->>>>>>> fd981c8b65506a8c25e17bd546de75a369c72e75
+    
+    merged_dict[[ID]] <- c(RMSE_stats_merged,zero_stats_merged)
+    
+    ########### METHOD 4: softImpute thresholded ###########
+    output_sI_thresh <- output_sI
+    output_sI_thresh[output_sI < 0.5] <- 0
+    
+    zero_stats_thresh <- zero_quality_stats(mask, truth, recon=output_sI_thresh)
+    print(zero_stats_thresh)
+    
+    RMSE_stats_thresh <- RMSE_for_sc(mask, truth, data, recon= output_sI_thresh)
+    print(RMSE_stats_thresh)
+    
+    softImpute_thresh_dict[[ID]] <- c(RMSE_stats_thresh,zero_stats_thresh)
+    
+    ########### METHOD 5: ALRA RMSE Hack ###########
+    output_ALRA_hack <- output_ALRA
+    output_ALRA_hack[!all_zeros_mask] <- data[!all_zeros_mask]
+    
+    # compute some statistics
+    zero_stats_ALRA_hack <- zero_quality_stats(mask, truth, recon=output_ALRA_hack)
+    print(zero_stats_ALRA_hack)
+    
+    RMSE_stats_ALRA_hack <- RMSE_for_sc(mask, truth, data, recon= output_ALRA_hack)
+    print(RMSE_stats_ALRA_hack)
+    
+    alra_RMSE_hack_dict[[ID]] <- c(RMSE_stats_ALRA_hack,zero_stats_ALRA_hack)
   }
 }
 #   
 # 
-output_sI_hack <- output_sI 
-output_sI_hack[!all_zeros_mask] <- data[!all_zeros_mask]
-
+# output_sI_hack <- output_sI 
+# output_sI_hack[!all_zeros_mask] <- data[!all_zeros_mask]
+# 
+# # # compute some statistics
+# zero_stats_sI_hack <- zero_quality_stats(mask, truth, recon=output_sI_hack)
+# print(zero_stats_sI_hack)
+# 
+# RMSE_stats_sI_hack <- RMSE_for_sc(mask, truth, data, recon= output_sI_hack)
+# print(RMSE_stats_sI_hack)
+# 
+# output_ALRA_hack <- output_ALRA
+# output_ALRA_hack[!all_zeros_mask] <- data[!all_zeros_mask]
+# 
 # # compute some statistics
-zero_stats_sI_hack <- zero_quality_stats(mask, truth, recon=output_sI_hack)
-print(zero_stats_sI_hack)
-
-RMSE_stats_sI_hack <- RMSE_for_sc(mask, truth, data, recon= output_sI_hack)
-print(RMSE_stats_sI_hack)
-
-output_ALRA_hack <- output_ALRA
-output_ALRA_hack[!all_zeros_mask] <- data[!all_zeros_mask]
-
-# compute some statistics
-zero_stats_ALRA_hack <- zero_quality_stats(mask, truth, recon=output_ALRA_hack)
-print(zero_stats_ALRA_hack)
-
-RMSE_stats_ALRA_hack <- RMSE_for_sc(mask, truth, data, recon= output_ALRA_hack)
-print(RMSE_stats_ALRA_hack)
+# zero_stats_ALRA_hack <- zero_quality_stats(mask, truth, recon=output_ALRA_hack)
+# print(zero_stats_ALRA_hack)
+# 
+# RMSE_stats_ALRA_hack <- RMSE_for_sc(mask, truth, data, recon= output_ALRA_hack)
+# print(RMSE_stats_ALRA_hack)
 
 
 ### % Bio Zeros Preserved Barplot ###
-bio_zeros_preserved <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+bio_zeros_preserved_ALRA <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
 names <- rep(NA, length(nGroups))
 for (i in 1:length(nGroups)) {
   for (j in 1:length(nCells)){
     ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
-    bio_zeros_preserved[j,i] <- alra_dict[[ID]]$frac_bio_zeros_preserved
+    bio_zeros_preserved_ALRA[j,i] <- alra_dict[[ID]]$frac_bio_zeros_preserved
     names[i] <- nGroups[i]
   }
 }
 
-barplot(bio_zeros_preserved,
-        main = "Preservation of Biological Zeros",
+fig0 <- barplot(bio_zeros_preserved_ALRA,
+        main = "Preservation of Biological Zeros by ALRA",
         xlab = "# Cell Groups in Data Set",
         ylab = "% Biological Zeros Preserved",
         names.arg = names,
@@ -166,30 +197,53 @@ legend("topleft", c("(# Cells, # Genes) = (1000, 5000)",
        fill = c("lightblue", "cadetblue4")
        )
 
+bio_zeros_preserved_sI_thresh <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+names <- rep(NA, length(nGroups))
+for (i in 1:length(nGroups)) {
+  for (j in 1:length(nCells)){
+    ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
+    bio_zeros_preserved_sI_thresh[j,i] <- softImpute_thresh_dict[[ID]]$frac_bio_zeros_preserved
+    names[i] <- nGroups[i]
+  }
+}
 
-# tSNE accepts objects as rows, dimensions as columns 
-# I don't know what the normalization is. 
-output_sI_normed <- normalize_input(t(output_sI_hack)) 
-output_ALRA_normed <- normalize_input(t(output_ALRA_hack))
-output_merged_normed <- normalize_input(t(output_merged))
-
-# performs tSNE + PCA 
-low_dim_rep_sI <- Rtsne(output_sI_normed)$Y
-low_dim_rep_ALRA <- Rtsne(output_ALRA_normed)$Y
-low_dim_rep_merged <- Rtsne(output_merged_normed)$Y
-
-
-sI_fr <- as.data.frame(low_dim_rep_sI)
-ALRA_fr <- as.data.frame(low_dim_rep_ALRA)
-merged_fr <- as.data.frame(low_dim_rep_merged)
+fig1 <- barplot(bio_zeros_preserved_sI_thresh,
+                main = "Preservation of Biological Zeros by sI thresh",
+                xlab = "# Cell Groups in Data Set",
+                ylab = "% Biological Zeros Preserved",
+                names.arg = names,
+                col = c("lightblue", "cadetblue4"),
+                beside = TRUE)
+legend("topleft", c("(# Cells, # Genes) = (1000, 5000)",
+                    "(# Cells, # Genes) = (10000, 1000)"),
+       fill = c("lightblue", "cadetblue4")
+)
 
 
-fig1 <- plot_ly(data = sI_fr,x=~V1,y=~V2,mode='markers')
-fig2 <- plot_ly(data = ALRA_fr,x=~V1,y=~V2,mode='markers')
-fig3 <- plot_ly(data = merged_fr,x=~V1,y=~V2,mode='markers')
-fig1
-fig2
-fig3
+
+# # tSNE accepts objects as rows, dimensions as columns 
+# # I don't know what the normalization is. 
+# output_sI_normed <- normalize_input(t(output_sI_hack)) 
+# output_ALRA_normed <- normalize_input(t(output_ALRA_hack))
+# output_merged_normed <- normalize_input(t(output_merged))
+# 
+# # performs tSNE + PCA 
+# low_dim_rep_sI <- Rtsne(output_sI_normed)$Y
+# low_dim_rep_ALRA <- Rtsne(output_ALRA_normed)$Y
+# low_dim_rep_merged <- Rtsne(output_merged_normed)$Y
+# 
+# 
+# sI_fr <- as.data.frame(low_dim_rep_sI)
+# ALRA_fr <- as.data.frame(low_dim_rep_ALRA)
+# merged_fr <- as.data.frame(low_dim_rep_merged)
+# 
+# 
+# fig1 <- plot_ly(data = sI_fr,x=~V1,y=~V2,mode='markers')
+# fig2 <- plot_ly(data = ALRA_fr,x=~V1,y=~V2,mode='markers')
+# fig3 <- plot_ly(data = merged_fr,x=~V1,y=~V2,mode='markers')
+# fig1
+# fig2
+# fig3
 
 
 ####
