@@ -8,6 +8,8 @@ setwd('~/Documents/Projects/ZoomDeflate/')
 library(softImpute)
 library(ggplot2)
 library(dplyr)
+library(hash)
+library(Rtsne)
 #library(hrbrthemes)
 source('ALRA/alra.R')
 source('ALRA/jp_utilities.R')
@@ -103,6 +105,38 @@ for (size in nGroups) {
 }
 #   
 # 
+output_sI_hack <- output_sI 
+output_sI_hack[!all_zeros_mask] <- data[!all_zeros_mask]
+
+# # compute some statistics
+zero_stats_sI_hack <- zero_quality_stats(t(mask), t(truth), recon=output_sI_hack)
+print(zero_stats_sI_hack)
+
+RMSE_stats_sI_hack <- RMSE_for_sc(t(mask), t(truth), data, recon= output_sI_hack)
+print(RMSE_stats_sI_hack)
+
+trans_zeros_mask <- t(all_zeros_mask)
+trans_data <- t(data)
+output_ALRA_hack <- output_ALRA
+output_ALRA_hack[!trans_zeros_mask] <- trans_data[!trans_zeros_mask]
+
+# compute some statistics
+zero_stats_ALRA_hack <- zero_quality_stats(mask, truth, recon=output_ALRA_hack)
+print(zero_stats_ALRA_hack)
+
+RMSE_stats_ALRA_hack <- RMSE_for_sc(mask, truth, trans_data, recon= output_ALRA_hack)
+print(RMSE_stats_ALRA_hack)
+
+####
+# write the matrices to csv
+# load them into MATLAB/Python and do a clustering analysis
+# (or do that natively in R)
+# with goal of computing consistency, ARI, something like this.
+# 
+# Look at tSNE plot
+#
+# 
+
 #### RMSE-hacking
 # data <- t(data)
 # all_zeros_mask <- t(all_zeros_mask)
