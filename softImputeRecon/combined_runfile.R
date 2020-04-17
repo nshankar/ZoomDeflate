@@ -10,6 +10,7 @@ library(ggplot2)
 library(dplyr)
 library(hash)
 library(Rtsne)
+library(plotly)
 #library(hrbrthemes)
 source('ALRA/alra.R')
 source('ALRA/jp_utilities.R')
@@ -127,12 +128,27 @@ print(zero_stats_ALRA_hack)
 RMSE_stats_ALRA_hack <- RMSE_for_sc(mask, truth, trans_data, recon= output_ALRA_hack)
 print(RMSE_stats_ALRA_hack)
 
+# tSNE accepts objects as rows, dimensions as columns 
+# I don't know what the normalization is. 
+output_sI_normed <- normalize_input(t(output_sI_hack)) 
+output_ALRA_normed <- normalize_input(output_ALRA)
+
+# performs tSNE + PCA 
+low_dim_rep_sI <- Rtsne(output_sI_normed)$Y
+low_dim_rep_ALRA <- Rtsne(output_ALRA_normed)$Y
+
+sI_fr <- as.data.frame(low_dim_rep_sI)
+ALRA_fr <- as.data.frame(low_dim_rep_ALRA)
+
+fig1 <- plot_ly(data = sI_fr,x=~V1,y=~V2,mode='markers')
+fig2 <- plot_ly(data = ALRA_fr,x=~V1,y=~V2,mode='markers')
+fig1
+fig2
 ####
 # write the matrices to csv
 # load them into MATLAB/Python and do a clustering analysis
 # (or do that natively in R)
 # with goal of computing consistency, ARI, something like this.
-# 
 # Look at tSNE plot
 #
 # 
