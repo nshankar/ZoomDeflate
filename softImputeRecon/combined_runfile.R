@@ -93,7 +93,7 @@ for (size in nGroups) {
     # invert the normalize_data operation
     output_ALRA <-  unnormalize_rows(A = output_ALRA, og_row_sums = row_sums_data)
     
-    # take transpose for better
+    # take transpose for better handling
     output_ALRA <- t(output_ALRA)
     
     # compute some statistics
@@ -141,13 +141,13 @@ print(RMSE_stats_ALRA_hack)
 # tSNE accepts objects as rows, dimensions as columns 
 # I don't know what the normalization is. 
 output_sI_normed <- normalize_input(t(output_sI_hack)) 
-output_ALRA_normed <- normalize_input(output_ALRA_hack)
-output_merged_normed <- normalize_input(output_merged)
+output_ALRA_normed <- normalize_input(t(output_ALRA_hack))
+output_merged_normed <- normalize_input(t(output_merged))
 
 # performs tSNE + PCA 
 low_dim_rep_sI <- Rtsne(output_sI_normed)$Y
 low_dim_rep_ALRA <- Rtsne(output_ALRA_normed)$Y
-low_dim_rep_merged <- Rtsne(output_merged)$Y
+low_dim_rep_merged <- Rtsne(output_merged_normed)$Y
 
 
 sI_fr <- as.data.frame(low_dim_rep_sI)
