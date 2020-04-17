@@ -81,9 +81,7 @@ for (size in nGroups) {
     
     ########### RUN ALRA ###########
     # take transpose b/c that's what ALRA enjoys 
-    mask <- t(mask)
     A_norm <- t(data.normalized) #rename normalized data
-    truth <- t(truth)
     row_sums_data <- col_sums_data
     
     # Choose k (# of singular values in the approximation) by measuring when they get smol. 
@@ -95,13 +93,27 @@ for (size in nGroups) {
     # invert the normalize_data operation
     output_ALRA <-  unnormalize_rows(A = output_ALRA, og_row_sums = row_sums_data)
     
+    # take transpose for better
+    output_ALRA <- t(output_ALRA)
+    
     # compute some statistics
     zero_stats_ALRA <- zero_quality_stats(mask, truth, recon=output_ALRA)
     print(zero_stats_ALRA)
     
-    RMSE_stats_ALRA <- RMSE_for_sc(mask, truth, t(data), recon= output_ALRA)
+    RMSE_stats_ALRA <- RMSE_for_sc(mask, truth, data, recon= output_ALRA)
     alra_dict[[ID]] <- c(RMSE_stats_ALRA,zero_stats_ALRA)
     print(RMSE_stats_ALRA)
+    
+    ########### METHOD 3 ###########
+    # TO DO: actually save the stats for this method (make a dict)
+    output_merged <- output_sI
+    output_merged[output_ALRA==0] <- 0
+    
+    zero_stats_merged <- zero_quality_stats(mask, truth, recon=output_merged)
+    print(zero_stats_merged)
+    
+    RMSE_stats_merged <- RMSE_for_sc(mask, truth, data, recon= output_merged)
+    print(RMSE_stats_merged)
   }
 }
 #   
@@ -110,40 +122,45 @@ output_sI_hack <- output_sI
 output_sI_hack[!all_zeros_mask] <- data[!all_zeros_mask]
 
 # # compute some statistics
-zero_stats_sI_hack <- zero_quality_stats(t(mask), t(truth), recon=output_sI_hack)
+zero_stats_sI_hack <- zero_quality_stats(mask, truth, recon=output_sI_hack)
 print(zero_stats_sI_hack)
 
-RMSE_stats_sI_hack <- RMSE_for_sc(t(mask), t(truth), data, recon= output_sI_hack)
+RMSE_stats_sI_hack <- RMSE_for_sc(mask, truth, data, recon= output_sI_hack)
 print(RMSE_stats_sI_hack)
 
-trans_zeros_mask <- t(all_zeros_mask)
-trans_data <- t(data)
 output_ALRA_hack <- output_ALRA
-output_ALRA_hack[!trans_zeros_mask] <- trans_data[!trans_zeros_mask]
+output_ALRA_hack[!all_zeros_mask] <- data[!all_zeros_mask]
 
 # compute some statistics
 zero_stats_ALRA_hack <- zero_quality_stats(mask, truth, recon=output_ALRA_hack)
 print(zero_stats_ALRA_hack)
 
-RMSE_stats_ALRA_hack <- RMSE_for_sc(mask, truth, trans_data, recon= output_ALRA_hack)
+RMSE_stats_ALRA_hack <- RMSE_for_sc(mask, truth, data, recon= output_ALRA_hack)
 print(RMSE_stats_ALRA_hack)
 
 # tSNE accepts objects as rows, dimensions as columns 
 # I don't know what the normalization is. 
 output_sI_normed <- normalize_input(t(output_sI_hack)) 
-output_ALRA_normed <- normalize_input(output_ALRA)
+output_ALRA_normed <- normalize_input(output_ALRA_hack)
+output_merged_normed <- normalize_input(output_merged)
 
 # performs tSNE + PCA 
 low_dim_rep_sI <- Rtsne(output_sI_normed)$Y
 low_dim_rep_ALRA <- Rtsne(output_ALRA_normed)$Y
+low_dim_rep_merged <- Rtsne(output_merged)$Y
+
 
 sI_fr <- as.data.frame(low_dim_rep_sI)
 ALRA_fr <- as.data.frame(low_dim_rep_ALRA)
+merged_fr <- as.data.frame(low_dim_rep_merged)
+
 
 fig1 <- plot_ly(data = sI_fr,x=~V1,y=~V2,mode='markers')
 fig2 <- plot_ly(data = ALRA_fr,x=~V1,y=~V2,mode='markers')
+fig3 <- plot_ly(data = merged_fr,x=~V1,y=~V2,mode='markers')
 fig1
 fig2
+fig3
 ####
 # write the matrices to csv
 # load them into MATLAB/Python and do a clustering analysis
