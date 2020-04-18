@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 from numpy import percentile
 import pandas as pd
 from sklearn.metrics import adjusted_rand_score
-        
+from sklearn.decomposition import PCA
 
 def load_helper(subfolder, fname):
     data_path = os.path.dirname(os.getcwd())
@@ -78,9 +78,11 @@ Here row is cells column are genes
 """
 def main():
     report_name = "ARI_report_csv"
-    subfolders = ['5_groups_1000_cells_5000_genes/'];
+    subfolders = ['5_groups_1000_cells_5000_genes/','10_groups_1000_cells_5000_genes/'];
     file_names = ['counts.csv', 'true_counts.csv']
-    num_tries = 3 # how many times we run kmeans
+    num_tries = 100 # how many times we run kmeans
+    pca_dim = 2
+    pca = PCA(n_components = pca_dim)
     
     data_path = os.path.dirname(os.getcwd())
     data_path = data_path + '/SplatGenData/'
@@ -94,7 +96,8 @@ def main():
         
         for i in range(len(file_names)):
             recon_matrix = load_helper(subfolder, file_names[i])
-            results[i,:] = kmeans_ARI(recon_matrix.T, 
+            X_pc = pca.fit_transform(recon_matrix.T)
+            results[i,:] = kmeans_ARI(X_pc, 
                                       true_labels, num_K, num_tries)
         
         data["min"] = results[:, 0]
@@ -105,6 +108,7 @@ def main():
         
         df = pd.DataFrame(data)
         df.to_csv(data_path + subfolder + report_name)
+        print("finished writing report for", subfolder)
             
         
         
