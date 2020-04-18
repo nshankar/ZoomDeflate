@@ -95,3 +95,143 @@ unnormalize_rows <- function(A, og_row_sums) {
   A <- sweep(A, 1, og_row_sums, '*')
   return(A)
 }
+
+# Abusing the hell out of R's namespace design
+# If anything does not work properly, 
+# Nikhil will fix it regardless of time of day
+# (until the Math 651 presentation on 4/19)
+myZeroQualBarplots <- function() {
+  ### % Bio Zeros Preserved Barplot ###
+  ## ALRA ##
+  colors <- c("lightblue", "cadetblue4")
+  ylim_ <- c(0, 0.7)
+  
+  bio_zeros_preserved_ALRA <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+  names <- rep(NA, length(nGroups))
+  for (i in 1:length(nGroups)) {
+    for (j in 1:length(nCells)){
+      ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
+      bio_zeros_preserved_ALRA[j,i] <- alra_dict[[ID]]$frac_bio_zeros_preserved
+      names[i] <- nGroups[i]
+    }
+  }
+  
+  fig0 <- barplot(bio_zeros_preserved_ALRA,
+                  main = "Preservation of Biological Zeros by ALRA",
+                  xlab = "# Cell Groups in Data Set",
+                  ylab = "% Biological Zeros Preserved",
+                  names.arg = names,
+                  col = colors,
+                  ylim = ylim_,
+                  beside = TRUE)
+  legend("topleft", c("(# Cells, # Genes) = (1000, 5000)",
+                      "(# Cells, # Genes) = (10000, 1000)"),
+         fill = c("lightblue", "cadetblue4")
+  )
+  
+  ## sI_thresh ##
+  bio_zeros_preserved_sI_thresh <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+  names <- rep(NA, length(nGroups))
+  for (i in 1:length(nGroups)) {
+    for (j in 1:length(nCells)){
+      ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
+      bio_zeros_preserved_sI_thresh[j,i] <- softImpute_thresh_dict[[ID]]$frac_bio_zeros_preserved
+      names[i] <- nGroups[i]
+    }
+  }
+  
+  fig1 <- barplot(bio_zeros_preserved_sI_thresh,
+                  main = "Preservation of Biological Zeros by softImpute",
+                  xlab = "# Cell Groups in Data Set",
+                  ylab = "% Biological Zeros Preserved",
+                  names.arg = names,
+                  col = colors,
+                  ylim = ylim_,
+                  beside = TRUE)
+  legend("topleft", c("(# Cells, # Genes) = (1000, 5000)",
+                      "(# Cells, # Genes) = (10000, 1000)"),
+         fill = c("lightblue", "cadetblue4")
+  )
+  
+  
+  ## ALRA_hack ##
+  bio_zeros_preserved_ALRA_hack <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+  names <- rep(NA, length(nGroups))
+  for (i in 1:length(nGroups)) {
+    for (j in 1:length(nCells)){
+      ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
+      bio_zeros_preserved_ALRA_hack[j,i] <- alra_RMSE_hack_dict[[ID]]$frac_bio_zeros_preserved
+      names[i] <- nGroups[i]
+    }
+  }
+  
+  fig2 <- barplot(bio_zeros_preserved_ALRA_hack,
+                  main = "Preservation of Biological Zeros by ALRA hack",
+                  xlab = "# Cell Groups in Data Set",
+                  ylab = "% Biological Zeros Preserved",
+                  names.arg = names,
+                  col = colors,
+                  ylim = ylim_,
+                  beside = TRUE)
+  legend("topleft", c("(# Cells, # Genes) = (1000, 5000)",
+                      "(# Cells, # Genes) = (10000, 1000)"),
+         fill = c("lightblue", "cadetblue4")
+  )
+  
+  ### % Tech Zeros Reconstructed Barplot ###
+  colors = c("salmon1", "firebrick")
+  ylim_ = c(0, 1)
+  
+  ## ALRA ##
+  tech_zeros_reconned_ALRA <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+  names <- rep(NA, length(nGroups))
+  for (i in 1:length(nGroups)) {
+    for (j in 1:length(nCells)){
+      ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
+      tech_zeros_reconned_ALRA[j,i] <- alra_dict[[ID]]$frac_tech_zeros_reconned
+      names[i] <- nGroups[i]
+    }
+  }
+  
+  fig3 <- barplot(tech_zeros_reconned_ALRA,
+                  main = "Reconstruction of Technical Zeros by ALRA",
+                  xlab = "# Cell Groups in Data Set",
+                  ylab = "% Technical Zeros Reconstructed",
+                  names.arg = names,
+                  col = colors,
+                  beside = TRUE,
+                  ylim = ylim_)
+  legend("bottomright", c("(# Cells, # Genes) = (1000, 5000)",
+                          "(# Cells, # Genes) = (10000, 1000)"),
+         fill = colors
+  )
+  
+  ## sI_thresh ##
+  tech_zeros_reconned_sI_thresh <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+  names <- rep(NA, length(nGroups))
+  for (i in 1:length(nGroups)) {
+    for (j in 1:length(nCells)){
+      ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
+      tech_zeros_reconned_sI_thresh[j,i] <- softImpute_thresh_dict[[ID]]$frac_tech_zeros_reconned
+      names[i] <- nGroups[i]
+    }
+  }
+  
+  fig4 <- barplot(tech_zeros_reconned_sI_thresh,
+                  main = "Reconstruction of Technical Zeros by softImpute",
+                  xlab = "# Cell Groups in Data Set",
+                  ylab = "% Technical Zeros Reconstructed",
+                  names.arg = names,
+                  col = colors,
+                  ylim = ylim_,
+                  beside = TRUE)
+  legend("bottomright", c("(# Cells, # Genes) = (1000, 5000)",
+                          "(# Cells, # Genes) = (10000, 1000)"),
+         fill = colors
+  )
+  
+}
+
+
+
+
