@@ -15,51 +15,34 @@ import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 from sklearn.decomposition import PCA
 
-def load_helper(subfolder, fname,rd_output_flag):
+def load_helper(subfolder, fname,header_lines):
     data_path = os.path.dirname(os.getcwd())
     data_path = data_path + '/SplatGenData/'
     data_folder = data_path + subfolder
-    if rd_output_flag:
-        try:
-            file_to_load = data_folder + fname
-            with open(file_to_load) as data_file:
-                #            ncols = len(data_file.readline().split(','))
-                #            X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
-                X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',skip_header=1) #TODO change back to int
-            Y = np.matrix(X)
-        except FileNotFoundError:
-            file_to_load = data_folder + fname
-            with open(file_to_load) as data_file:
-                #            ncols = len(data_file.readline().split(','))
-                #            X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
-                X = np.genfromtxt(data_file,delimiter=' ')
-            Y = np.matrix(X)
-    else:
-        try:
-            file_to_load = data_folder + fname
-            with open(file_to_load) as data_file:
-                #            ncols = len(data_file.readline().split(','))
-                #            X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
-                X = np.genfromtxt(data_file,dtype = 'int_',delimiter=' ') #TODO change back to int
-            Y = np.matrix(X)
-        except FileNotFoundError:
-            file_to_load = data_folder + fname
-            with open(file_to_load) as data_file:
-                #            ncols = len(data_file.readline().split(','))
-                #            X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
-                X = np.genfromtxt(data_file,delimiter=' ')
-            Y = np.matrix(X)
+    try:
+        file_to_load = data_folder + fname
+        with open(file_to_load) as data_file:
+#            ncols = len(data_file.readline().split(','))
+#            X = np.genfromtxt(data_file,dtype = 'int_',delimiter=',',usecols=range(1,ncols))
+            X = np.genfromtxt(data_file,dtype = 'int_',delimiter=' ',skip_header=header_lines) #TODO change back to int
+        Y = np.matrix(X)
+    except FileNotFoundError:
+        file_to_load = data_folder + fname
+        with open(file_to_load) as data_file:
+#            ncols = len(data_file.readline().split(','))
+#            X = np.genfromtxt(data_file,delimiter=',',usecols=range(1,ncols))
+            X = np.genfromtxt(data_file,delimiter=' ')
+        Y = np.matrix(X)
     return Y
 
-
 def load_counts(subfolder):
-    return load_helper(subfolder, 'counts.csv',False)
+    return load_helper(subfolder, 'counts.csv',0)
 
 def load_true_counts(subfolder):
-    return load_helper(subfolder, 'true_counts.csv',False)
+    return load_helper(subfolder, 'true_counts.csv',0)
 
 def load_classification(subfolder):
-    return load_helper(subfolder, 'group_data.csv',False)
+    return load_helper(subfolder, 'group_data.csv',0)
 
 # [input]: subfolder of SplatGenData where csv lives, name of csv. Also can load .csv.gz (g-zipped csv)
 # behaviour: skips the first row and first column
@@ -101,13 +84,14 @@ def main():
                   '2_groups_10000_cells_1000_genes/',
                   '5_groups_10000_cells_1000_genes/',
                   '10_groups_10000_cells_1000_genes/'];
-    file_names = ['true_counts.csv','counts.csv','output_sI_thresh.csv','output_ALRA.csv','output_ALRA_hack.csv']
-    num_tries = 100 # how many times we run kmeans
+#    file_names = ['counts.csv', 'true_counts.csv','output_ALRA_hack.csv','output_sI_thresh.csv']
+    file_names = ['output_ALRA_hack.csv','output_sI_thresh.csv']
+
+    num_tries = 50 # how many times we run kmeans
     pca_dim = 2
     pca = PCA(n_components = pca_dim)
     
     data_path = os.path.dirname(os.getcwd())
-    data_out_path = data_path + '/Clustering_Data/'
     data_path = data_path + '/SplatGenData/'
     for subfolder in subfolders:
         true_labels = np.array(load_classification(subfolder))
@@ -116,12 +100,13 @@ def main():
         num_K = np.max(true_labels) + 1
         results = np.zeros([len(file_names), 5])
         data = {'ReconMatrix': file_names}
-        rd_output_flag = False
+        header_lines = 0
         for i in range(len(file_names)):
             print(i)
             if i > 1:
-                rd_output_flag = True
-            recon_matrix = load_helper(subfolder, file_names[i],rd_output_flag)
+                header_lines = 1
+                print(header_lines)
+            recon_matrix = load_helper(subfolder, file_names[i],header_lines)
             X_pc = pca.fit_transform(recon_matrix.T)
             results[i,:] = kmeans_ARI(X_pc, 
                                       true_labels, num_K, num_tries)
@@ -133,7 +118,7 @@ def main():
         data["max"] = results[:,4]
         
         df = pd.DataFrame(data)
-        df.to_csv(data_out_path + subfolder + report_name)
+        df.to_csv(data_path + subfolder + report_name)
         print("finished writing report for", subfolder)
             
         

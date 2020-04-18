@@ -1,8 +1,8 @@
 # Nikhil's wd
-setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
+# setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
 
 # Jeremy's wd
-# setwd('~/Documents/Projects/ZoomDeflate/')
+setwd('~/Documents/Projects/ZoomDeflate/')
 
 # Load some libraries 
 library(softImpute)
@@ -18,9 +18,9 @@ source('ALRA/jp_utilities.R')
 set.seed(43) # Some ML projects make this seed a hyper-parameter
 
 # Data sets to run code upon
-nGroups <- c(2, 5, 10)
-nCells <- c(1000, 10000)
-nGenes <- c(5000, 1000)
+nGroups <- c(10) #c(2, 5, 10)
+nCells <- c(10000) #c(1000, 10000)
+nGenes <- c(1000)#c(5000, 1000)
 
 # Store RMSE results
 softImpute_dict <- hash()
