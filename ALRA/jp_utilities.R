@@ -60,7 +60,7 @@ RMSE_for_sc <- function(mask, truth, data, recon) {
     RMSE_nonzeros = RMSE_nonz))
 }
 
-## ATT'n NIKHIL: should col_sums_data be og_col_sums in the sweep command?
+
 unnormalize_data <- function(A, col_sums_data) {
     # invert the function normalize_data from alra.R
     A <- (exp(A) - 1)/1E4
@@ -139,18 +139,18 @@ myZeroQualBarplots <- function() {
     )
     
     ## sI_thresh ##
-    bio_zeros_preserved_sI_thresh <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+    bio_zeros_preserved_sI<- matrix(0, nrow=length(nCells), ncol=length(nGroups))
     names <- rep(NA, length(nGroups))
     for (i in 1:length(nGroups)) {
         for (j in 1:length(nCells)){
             ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
-            bio_zeros_preserved_sI_thresh[j,i] <- softImpute_thresh_dict[[ID]]$frac_bio_zeros_preserved
+            bio_zeros_preserved_sI[j,i] <- softImpute_dict[[ID]]$frac_bio_zeros_preserved
             names[i] <- nGroups[i]
         }
     }
     
-    fig1 <- barplot(bio_zeros_preserved_sI_thresh,
-    main = "Preservation of Biological Zeros by softImpute",
+    fig1 <- barplot(bio_zeros_preserved_sI,
+    main = "Preservation of Biological Zeros by ZoomDeflate",
     xlab = "# Cell Groups in Data Set",
     ylab = "% Biological Zeros Preserved",
     names.arg = names,
@@ -175,7 +175,7 @@ myZeroQualBarplots <- function() {
     }
     
     fig2 <- barplot(bio_zeros_preserved_ALRA_hack,
-    main = "Preservation of Biological Zeros by ALRA hack",
+    main = "Preservation of Biological Zeros by ALRA-Alt",
     xlab = "# Cell Groups in Data Set",
     ylab = "% Biological Zeros Preserved",
     names.arg = names,
@@ -216,18 +216,18 @@ myZeroQualBarplots <- function() {
     )
     
     ## sI_thresh ##
-    tech_zeros_reconned_sI_thresh <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
+    tech_zeros_reconned_sI <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
     names <- rep(NA, length(nGroups))
     for (i in 1:length(nGroups)) {
         for (j in 1:length(nCells)){
             ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
-            tech_zeros_reconned_sI_thresh[j,i] <- softImpute_thresh_dict[[ID]]$frac_tech_zeros_reconned
+            tech_zeros_reconned_sI[j,i] <- softImpute_dict[[ID]]$frac_tech_zeros_reconned
             names[i] <- nGroups[i]
         }
     }
     
-    fig4 <- barplot(tech_zeros_reconned_sI_thresh,
-    main = "Reconstruction of Technical Zeros by softImpute",
+    fig4 <- barplot(tech_zeros_reconned_sI,
+    main = "Reconstruction of Technical Zeros by ZoomDeflate",
     xlab = "# Cell Groups in Data Set",
     ylab = "% Technical Zeros Reconstructed",
     names.arg = names,
