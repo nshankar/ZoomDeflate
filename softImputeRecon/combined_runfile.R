@@ -199,7 +199,71 @@ for (size in nGroups) {
 
 myZeroQualBarplots()
 
+##################### \begin{RMSE Chart} ####################################
+library(reactable)
 
+RMSE_dicts <- c(softImpute_dict, alra_RMSE_hack_dict, alra_dict)
+RMSE_matrix <- matrix(NA, nrow = 6, ncol = length(softImpute_dict))
+alra_hack_string <- "ALRA Hack RMSE" #find a better name for this
+row_names<-rep("", 6)
+
+for (j in 1:length(nCells)){
+  for (i in 1:length(nGroups)) {
+    ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
+    row <- i + (j-1)*length(nGroups)
+    col <- 1
+    row_names[row] <- ID
+    for (dict in RMSE_dicts) {
+      RMSE_matrix[row, col] <- dict[[ID]]$RMSE_all
+      col <- col + 1
+      RMSE_matrix[row, col] <- dict[[ID]]$RMSE_dropouts
+      col <- col + 1
+    }
+  }
+}
+
+
+RMSE_matrix <- round(RMSE_matrix, digits=2) # for readability
+RMSE_data <- as.data.frame(RMSE_matrix, row.names = row_names)
+
+### Trying some 538 stuff ###
+maxWidth_ = 120
+# Ce n'est pas une pal orange
+orange_pal <- function(x) rgb(colorRamp(c("ivory", "lightcoral"))(x), maxColorValue = 255)
+
+mystyle <- function(value) {
+  normalized <- sqrt((value - min(RMSE_matrix)) / (max(RMSE_matrix) - min(RMSE_matrix)))
+  color <- orange_pal(normalized)
+  list(background = color)
+}
+
+reactable(
+  RMSE_data, rownames=TRUE,
+  style = list(fontFamily = "Work Sans, sans-serif", fontSize = "14px"),
+  columns = list(
+    .rownames = colDef(name = "(# Groups,    # Cells, # Genes)",
+                       headerStyle = list(fontSize = "12px")),
+    V1 = colDef(name = "All", style = mystyle, 
+                maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
+    V2 = colDef(name = "Dropouts", style = mystyle, 
+                maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
+    V3 = colDef(name = "All", style = mystyle, 
+                maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
+    V4 = colDef(name = "Dropouts", style = mystyle, 
+                maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
+    V5 = colDef(name = "All", style = mystyle, 
+                maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
+    V6 = colDef(name = "Dropouts", style = mystyle, 
+                maxWidth = maxWidth_, headerStyle = list(fontSize = "12px"))
+  ),
+  columnGroups = list(
+    colGroup(name = "Data Sets", columns = c(".rownames"), align = "left"),
+    colGroup(name = "ZoomDeflate RMSE", columns = c("V1", "V2")),
+    colGroup(name = alra_hack_string, columns = c("V3", "V4")),
+    colGroup(name = "ALRA RMSE", columns = c("V5", "V6"))
+  )
+)
+################## \end{RMSE Chart} #####################################
 
 # # tSNE accepts objects as rows, dimensions as columns 
 # # I don't know what the normalization is. 
