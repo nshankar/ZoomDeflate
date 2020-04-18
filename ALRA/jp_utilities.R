@@ -95,3 +95,12 @@ unnormalize_rows <- function(A, og_row_sums) {
   A <- sweep(A, 1, og_row_sums, '*')
   return(A)
 }
+
+tSNE_2 <- function(A){
+# tSNE accepts objects as rows, dimensions as columns
+# I don't know what the normalization is.
+output_normed <- normalize_input(t(A))
+# # performs PCA + tSNE 
+low_dim_rep <- Rtsne(output_normed)$Y
+return(low_dim_rep)
+}

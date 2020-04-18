@@ -85,6 +85,10 @@ for (size in nGroups) {
     #print(RMSE_stats_sI)
     
     write.csv(output_sI,paste(PATHNAME, "output_sI.csv",sep=""),row.names=FALSE)
+
+    tSNE_sI <- tSNE_2(output_sI)
+    write.csv(tSNE_sI,paste(PATHNAME, "tSNE_sI.csv",sep=""),row.names=FALSE)
+    
     ########### RUN ALRA ###########
     # take transpose b/c that's what ALRA enjoys 
     A_norm <- t(data.normalized) #rename normalized data
@@ -115,6 +119,9 @@ for (size in nGroups) {
     
     write.csv(output_ALRA,paste(PATHNAME, "output_ALRA.csv",sep=""),row.names=FALSE)
     
+    tSNE_ALRA <- tSNE_2(output_ALRA)
+    write.csv(tSNE_ALRA,paste(PATHNAME, "tSNE_ALRA.csv",sep=""),row.names=FALSE)
+    
     ########### METHOD 3:  ###########
     output_merged <- output_sI
     output_merged[output_ALRA==0] <- 0
@@ -128,6 +135,9 @@ for (size in nGroups) {
     merged_dict[[ID]] <- c(RMSE_stats_merged,zero_stats_merged)
     
     write.csv(output_merged,paste(PATHNAME, "output_merged.csv",sep=""),row.names=FALSE)
+    
+    tSNE_merged <- tSNE_2(output_merged)
+    write.csv(tSNE_merged,paste(PATHNAME, "tSNE_merged.csv",sep=""),row.names=FALSE)
     
     ########### METHOD 4: softImpute thresholded ###########
     output_sI_thresh <- output_sI
@@ -143,6 +153,9 @@ for (size in nGroups) {
     
     write.csv(output_sI_thresh,paste(PATHNAME, "output_sI_thresh.csv",sep=""),row.names=FALSE)
     
+    tSNE_sI_thresh <- tSNE_2(output_sI_thresh)
+    write.csv(tSNE_sI_thresh,paste(PATHNAME, "tSNE_sI_thresh.csv",sep=""),row.names=FALSE)
+    
     ########### METHOD 5: ALRA RMSE Hack ###########
     output_ALRA_hack <- output_ALRA
     output_ALRA_hack[!all_zeros_mask] <- data[!all_zeros_mask]
@@ -157,6 +170,8 @@ for (size in nGroups) {
     
     write.csv(output_ALRA_hack,paste(PATHNAME, "output_ALRA_hack.csv",sep=""),row.names=FALSE)
     
+    tSNE_ALRA_hack <- tSNE_2(output_ALRA_hack)
+    write.csv(tSNE_ALRA_hack,paste(PATHNAME, "tSNE_ALRA_hack.csv",sep=""),row.names=FALSE)
   }
 }
 #   
