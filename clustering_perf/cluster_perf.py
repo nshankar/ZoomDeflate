@@ -107,6 +107,7 @@ def main():
     pca = PCA(n_components = pca_dim)
     
     data_path = os.path.dirname(os.getcwd())
+    data_out_path = data_path + '/Clustering_Data/'
     data_path = data_path + '/SplatGenData/'
     for subfolder in subfolders:
         true_labels = np.array(load_classification(subfolder))
@@ -132,7 +133,7 @@ def main():
         data["max"] = results[:,4]
         
         df = pd.DataFrame(data)
-        df.to_csv(data_path + subfolder + report_name)
+        df.to_csv(data_out_path + subfolder + report_name)
         print("finished writing report for", subfolder)
             
         
