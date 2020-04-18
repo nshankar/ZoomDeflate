@@ -1,8 +1,8 @@
 # Nikhil's wd
-# setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
+setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
 
 # Jeremy's wd
-setwd('~/Documents/Projects/ZoomDeflate/')
+# setwd('~/Documents/Projects/ZoomDeflate/')
 
 # Load some libraries 
 library(softImpute)
@@ -182,72 +182,8 @@ for (size in nGroups) {
 # print(RMSE_stats_ALRA_hack)
 
 
-### % Bio Zeros Preserved Barplot ###
-bio_zeros_preserved_ALRA <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
-names <- rep(NA, length(nGroups))
-for (i in 1:length(nGroups)) {
-  for (j in 1:length(nCells)){
-    ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
-    bio_zeros_preserved_ALRA[j,i] <- alra_dict[[ID]]$frac_bio_zeros_preserved
-    names[i] <- nGroups[i]
-  }
-}
+myZeroQualBarplots()
 
-fig0 <- barplot(bio_zeros_preserved_ALRA,
-        main = "Preservation of Biological Zeros by ALRA",
-        xlab = "# Cell Groups in Data Set",
-        ylab = "% Biological Zeros Preserved",
-        names.arg = names,
-        col = c("lightblue", "cadetblue4"),
-        beside = TRUE)
-legend("topleft", c("(# Cells, # Genes) = (1000, 5000)",
-                    "(# Cells, # Genes) = (10000, 1000)"),
-       fill = c("lightblue", "cadetblue4")
-       )
-
-bio_zeros_preserved_sI_thresh <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
-names <- rep(NA, length(nGroups))
-for (i in 1:length(nGroups)) {
-  for (j in 1:length(nCells)){
-    ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
-    bio_zeros_preserved_sI_thresh[j,i] <- softImpute_thresh_dict[[ID]]$frac_bio_zeros_preserved
-    names[i] <- nGroups[i]
-  }
-}
-
-fig1 <- barplot(bio_zeros_preserved_sI_thresh,
-                main = "Preservation of Biological Zeros by sI thresh",
-                xlab = "# Cell Groups in Data Set",
-                ylab = "% Biological Zeros Preserved",
-                names.arg = names,
-                col = c("lightblue", "cadetblue4"),
-                beside = TRUE)
-legend("topleft", c("(# Cells, # Genes) = (1000, 5000)",
-                    "(# Cells, # Genes) = (10000, 1000)"),
-       fill = c("lightblue", "cadetblue4")
-)
-
-bio_zeros_preserved_ALRA_hack <- matrix(0, nrow=length(nCells), ncol=length(nGroups))
-names <- rep(NA, length(nGroups))
-for (i in 1:length(nGroups)) {
-  for (j in 1:length(nCells)){
-    ID = paste("(", nGroups[i], ", ", nCells[j], ", ", nGenes[j], ")", sep="")
-    bio_zeros_preserved_ALRA_hack[j,i] <- alra_RMSE_hack_dict[[ID]]$frac_bio_zeros_preserved
-    names[i] <- nGroups[i]
-  }
-}
-
-fig3 <- barplot(bio_zeros_preserved_ALRA_hack,
-                main = "Preservation of Biological Zeros by ALRA hack",
-                xlab = "# Cell Groups in Data Set",
-                ylab = "% Biological Zeros Preserved",
-                names.arg = names,
-                col = c("lightblue", "cadetblue4"),
-                beside = TRUE)
-legend("topleft", c("(# Cells, # Genes) = (1000, 5000)",
-                    "(# Cells, # Genes) = (10000, 1000)"),
-       fill = c("lightblue", "cadetblue4")
-)
 
 
 # # tSNE accepts objects as rows, dimensions as columns 
