@@ -46,13 +46,13 @@ for i = nGroups
             if make_figs
                 h= figure(1);
                 hold on
-                for el = 1:nGroups
+                for el = 1:i
                     gp_inds = (group_list == el);
                     plot(tSNE_vals(gp_inds,1),tSNE_vals(gp_inds,2),'o','MarkerSize',10)
                 end
                 set(gca,'FontName','Helvetica Neue','FontSize',20,'FontWeight','Bold')
                 set(gca,'TickDir','out');
-                title('2-dim t-SNE with true colouring')
+                title(char(['2-dim t-SNE with true color, method',methods{k}(2:end)]))
                 
                 % save plots in various figure formats
                 if save_figs
