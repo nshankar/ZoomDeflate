@@ -1,0 +1,76 @@
+Clustering 2_groups_1000_cells_5000_genes/ with 2 clusters neighbors 250
+clustering
+finished clustering
+cluster 0 correct: 0.5444444444444444
+cluster 1 correct: 0.5239130434782608
+ARI: 0.003905650161347043 min perf: 0.5239130434782608 avg perf: 0.5341787439613526
+RMSE of original restricted: 10.455656508436926
+RMSE of pred round restricted: 3.4532258814158645
+RMSE of pred round unrestricted: 2.9105073440896865
+Clustering 5_groups_1000_cells_5000_genes/ with 5 clusters neighbors 100
+clustering
+finished clustering
+cluster 0 correct: 0.5047619047619047
+cluster 1 correct: 0.9473684210526315
+cluster 2 correct: 0.994535519125683
+cluster 3 correct: 0.979381443298969
+cluster 4 correct: 0.4260089686098655
+ARI: 0.6169455151404021 min perf: 0.4260089686098655 avg perf: 0.7704112513698108
+RMSE of original restricted: 10.498326333239936
+RMSE of pred round restricted: 3.452450118808809
+RMSE of pred round unrestricted: 2.909177547005339
+Clustering 10_groups_1000_cells_5000_genes/ with 10 clusters neighbors 50
+clustering
+finished clustering
+cluster 0 correct: 0.5833333333333334
+cluster 1 correct: 0.42696629213483145
+cluster 2 correct: 0.49137931034482757
+cluster 3 correct: 0.19480519480519481
+cluster 4 correct: 0.2054794520547945
+cluster 5 correct: 0.40816326530612246
+cluster 6 correct: 0.44329896907216493
+cluster 7 correct: 0.7125
+cluster 8 correct: 0.8148148148148148
+cluster 9 correct: 0.4166666666666667
+ARI: 0.2105697014983669 min perf: 0.19480519480519481 avg perf: 0.4697407298532751
+RMSE of original restricted: 10.2611078125269
+RMSE of pred round restricted: 3.472288663581685
+RMSE of pred round unrestricted: 2.925668914966285
+Clustering 2_groups_10000_cells_1000_genes/ with 2 clusters neighbors 2500
+clustering
+finished clustering
+cluster 0 correct: 0.5040018294077292
+cluster 1 correct: 0.5011551448373911
+ARI: -9.396665108092913e-05 min perf: 0.5011551448373911 avg perf: 0.5025784871225601
+RMSE of original restricted: 30.811212344220735
+RMSE of pred round restricted: 7.87427083609653
+RMSE of pred round unrestricted: 5.215271114716856
+Clustering 5_groups_10000_cells_1000_genes/ with 5 clusters neighbors 1000
+clustering
+finished clustering
+cluster 0 correct: 0.21784472769409038
+cluster 1 correct: 0.3414516517964794
+cluster 2 correct: 0.896609227348527
+cluster 3 correct: 0.9123222748815166
+cluster 4 correct: 0.26813040585495673
+ARI: 0.321575030946641 min perf: 0.21784472769409038 avg perf: 0.527271657515114
+RMSE of original restricted: 31.326653130472423
+RMSE of pred round restricted: 7.905698322268173
+RMSE of pred round unrestricted: 5.228340807560272
+Clustering 10_groups_10000_cells_1000_genes/ with 10 clusters neighbors 500
+clustering
+finished clustering
+cluster 0 correct: 0.8109820485744457
+cluster 1 correct: 0.15384615384615385
+cluster 2 correct: 0.712
+cluster 3 correct: 0.5708661417322834
+cluster 4 correct: 0.15503875968992248
+cluster 5 correct: 0.5745047372954349
+cluster 6 correct: 0.5931254996003198
+cluster 7 correct: 0.7983539094650206
+cluster 8 correct: 0.8287895310796074
+cluster 9 correct: 0.7968586387434555
+ARI: 0.4125290380979712 min perf: 0.15384615384615385 avg perf: 0.5994365420026644
+RMSE of original restricted: 31.293885405572855
+RMSE of pred round restricted: 7.963464509444544
+RMSE of pred round unrestricted: 5.26326389230105
