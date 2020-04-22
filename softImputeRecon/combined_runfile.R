@@ -1,8 +1,8 @@
 # Nikhil's wd
-# setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
+setwd('/Users/nikhil/Documents/College/Math 651/ZoomDeflate/')
 
 # Jeremy's wd
-setwd('~/Documents/Projects/ZoomDeflate/')
+#setwd('~/Documents/Projects/ZoomDeflate/')
 
 # Load some libraries 
 library(softImpute)
@@ -18,9 +18,9 @@ source('ALRA/jp_utilities.R')
 set.seed(43) # Some ML projects make this seed a hyper-parameter
 
 # Data sets to run code upon
-nGroups <- c(10) #c(2, 5, 10)
-nCells <- c(10000) #c(1000, 10000)
-nGenes <- c(1000)#c(5000, 1000)
+nGroups <- c(2, 5, 10)
+nCells <- c(1000, 10000)
+nGenes <- c(5000, 1000)
 
 # Store RMSE results
 softImpute_dict <- hash()
@@ -238,7 +238,7 @@ for (j in 1:length(nCells)){
     for (dict in RMSE_dicts) {
       RMSE_matrix[row, col] <- dict[[ID]]$RMSE_all
       col <- col + 1
-      RMSE_matrix[row, col] <- dict[[ID]]$RMSE_dropouts
+      RMSE_matrix[row, col] <- dict[[ID]]$RMSE_zeros
       col <- col + 1
     }
   }
@@ -267,27 +267,27 @@ reactable(
                        headerStyle = list(fontSize = "12px")),
     V1 = colDef(name = "All", style = mystyle, 
                 maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
-    V2 = colDef(name = "Dropouts", style = mystyle, 
+    V2 = colDef(name = "Zeros", style = mystyle, 
                 maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
     V3 = colDef(name = "All", style = mystyle, 
                 maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
-    V4 = colDef(name = "Dropouts", style = mystyle, 
+    V4 = colDef(name = "Zeros", style = mystyle, 
                 maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
     V5 = colDef(name = "All", style = mystyle, 
                 maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
-    V6 = colDef(name = "Dropouts", style = mystyle, 
+    V6 = colDef(name = "Zeros", style = mystyle, 
                 maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
     V7 = colDef(name = "All", style = mystyle, 
                 maxWidth = maxWidth_, headerStyle = list(fontSize = "12px")),
-    V8 = colDef(name = "Dropouts", style = mystyle, 
+    V8 = colDef(name = "Zeros", style = mystyle, 
                 maxWidth = maxWidth_, headerStyle = list(fontSize = "12px"))
   ),
   columnGroups = list(
     colGroup(name = "Data Sets", columns = c(".rownames"), align = "left"),
-    colGroup(name = "ZoomDeflate", columns = c("V1", "V2"), align="right"),
-    colGroup(name = alra_hack_string, columns = c("V3", "V4"), align="right"),
-    colGroup(name = "ALRA", columns = c("V5", "V6"), align="right"),
-    colGroup(name="Observed", columns=c("V7", "V8"), align="right")
+    colGroup(name = "ZoomDeflate", columns = c("V1", "V2")),
+    colGroup(name = alra_hack_string, columns = c("V3", "V4")),
+    colGroup(name = "ALRA", columns = c("V5", "V6")),
+    colGroup(name="Observed", columns=c("V7", "V8"))
   )
 )
 ################## \end{RMSE Chart} #####################################
