@@ -61,6 +61,23 @@ def load_true_counts(subfolder):
 def load_classification(subfolder):
     return load_helper(subfolder, 'group_data.csv',False)
 
+def normalize_data(A):
+    #  Simple convenience function to library and log normalize a matrix
+    # column sum
+    totalUMIPerCell = A.sum(axis=0)
+#     Idk if I'm just being lazy but I"m pretty sure we don't need this adjustment now.
+#    if (any(totalUMIPerCell == 0)):
+#        toRemove <- which(totalUMIPerCell == 0)
+#        A <- A[-toRemove,]
+#        totalUMIPerCell <- totalUMIPerCell[-toRemove]
+#        cat(sprintf("Removed %d cells which did not express any genes\n", length(toRemove)))
+#
+    A_norm = A / totalUMIPerCell
+    A_norm = A_norm * 1e4
+    A_norm = np.log(A_norm +1)
+    return A_norm
+
+
 # [input]: subfolder of SplatGenData where csv lives, name of csv. Also can load .csv.gz (g-zipped csv)
 # behaviour: skips the first row and first column
 def load_csv_to_matrix(subfolder,name):
@@ -102,12 +119,12 @@ def main():
                   '5_groups_10000_cells_1000_genes/',
                   '10_groups_10000_cells_1000_genes/'];
     file_names = ['true_counts.csv','counts.csv','output_sI_thresh.csv','output_ALRA.csv','output_ALRA_hack.csv']
-    num_tries = 100 # how many times we run kmeans
-    pca_dim = 2
+    num_tries = 10 # how many times we run kmeans
+    pca_dim = 100
     pca = PCA(n_components = pca_dim)
     
     data_path = os.path.dirname(os.getcwd())
-    data_out_path = data_path + '/Clustering_Data/'
+    data_out_path = data_path + '/Clustering_Data_dim_100/'
     data_path = data_path + '/SplatGenData/'
     for subfolder in subfolders:
         true_labels = np.array(load_classification(subfolder))
@@ -122,6 +139,7 @@ def main():
             if i > 1:
                 rd_output_flag = True
             recon_matrix = load_helper(subfolder, file_names[i],rd_output_flag)
+            recon_matrix = normalize_data(recon_matrix)
             X_pc = pca.fit_transform(recon_matrix.T)
             results[i,:] = kmeans_ARI(X_pc, 
                                       true_labels, num_K, num_tries)
