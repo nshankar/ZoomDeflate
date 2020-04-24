@@ -12,10 +12,12 @@ from sklearn.metrics import adjusted_rand_score
 from scipy.optimize import fsolve
 from sklearn.cluster import KMeans
 from sklearn.cluster import SpectralClustering
+from sklearn.decomposition import PCA
 from scipy.special import logsumexp
 import numpy as np
 import math
 import os
+import matplotlib.pyplot as plt
 
 
 """
@@ -87,7 +89,23 @@ def init_cluster(X, num_K, num_neighbors):
     label_spectral = clustering.fit_predict(X_normalized)
     print("finished clustering")
     return label_spectral
+
+def normalize_data(A):
+    #  Simple convenience function to library and log normalize a matrix
+    # column sum
+    totalUMIPerCell = A.sum(axis=0)
+
+    A_norm = A / totalUMIPerCell
+    A_norm = A_norm * 1e4
+    A_norm = np.log(A_norm +1)
+    return A_norm
     
+def kmeans_cluster(X, num_K):
+    X_norm = normalize_data(X.T).T
+    X_pca = PCA(n_components = 100).fit_transform(X_norm)
+    labels = KMeans(n_clusters = num_K).fit_predict(X_pca)
+    return labels
+
 
 def MixedPoisson(X, num_K, num_iter = 10, true_labels = []):
     """
@@ -122,10 +140,11 @@ def MixedPoisson(X, num_K, num_iter = 10, true_labels = []):
     
     # use hard assignment to reduce numeric instabilities
     #labels = true_labels - 1
-    num_true = 500
-    labels = np.random.randint(0, num_K, N)
-    labels[:num_true] = true_labels[:num_true] - 1
-    #labels = init_cluster(X, num_K, 5) #KMeans(n_clusters = num_K).fit_predict(X)
+    #num_true = 500
+    #labels = np.random.randint(0, num_K, N)
+    #labels[:num_true] = true_labels[:num_true] - 1
+    #labels = init_cluster(X, num_K, 5) 
+    labels = kmeans_cluster(X, num_K)
             
     if len(true_labels) != 0:
         print("Initial clustering")
@@ -190,7 +209,15 @@ def MixedPoisson(X, num_K, num_iter = 10, true_labels = []):
         if num_changed == 0:
             break
         
-    return labels
+        
+    print("mu", mu)
+    print("dropoffs", dropoffs)
+    pred = X.copy()
+    pred = pred.astype(float)
+    for cell in range(N):
+        pred[cell, X[cell,:] == 0] = mu[X[cell,:] == 0, labels[cell]]
+
+    return labels, pred
         
 
 def load_helper(subfolder, fname):
@@ -237,6 +264,9 @@ def load_csv_to_matrix(subfolder,name):
     return Y
     
 def MSE(X_true, X_pred, X_observed):
+    return np.mean((np.array(X_true - X_pred) ** 2))
+
+def MSE_restricted(X_true, X_pred, X_observed):
     return np.mean((np.array(X_true[X_observed == 0] - X_pred[X_observed == 0]) ** 2))
 
 
@@ -256,19 +286,22 @@ def main():
     """
     
     
-    num_K = 5
+    num_K = 10
     print("loading data")
     #subfolder = 'new_small_examples/'
-    subfolder = '5_groups_1000_cells_5000_genes/';
+    subfolder = '10_groups_1000_cells_5000_genes/';
     X = np.array(load_counts(subfolder).T)
+    X_true = np.array(load_true_counts(subfolder).T)
     [num_cells, num_genes] = np.shape(X)
     print("finished loading")
     
     true_labels = np.array(load_classification(subfolder)).reshape(num_cells)
-    labels = MixedPoisson(X, num_K, true_labels = true_labels)
-    
-    print_classification(true_labels, labels, num_K)
-    
+
+    labels, pred = MixedPoisson(X, num_K, 1, true_labels = true_labels)
+    print("MSE_restricted", MSE_restricted(X_true, pred, X))
+    print(sum(pred > 100))
+    #print(((X_true - pred)[X == 0])[0:500])
+    #print(((X_true - X)[X == 0])[0:500])
 
 
 if __name__ == '__main__':
